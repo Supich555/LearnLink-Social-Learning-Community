@@ -12,6 +12,11 @@
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body{% if request.user.is_authenticated %} class="is-authenticated" data-current-user="{{ request.user.full_name|default:request.user.username }}"{% endif %}>
+    {% if request.user.is_authenticated and messages %}
+    <div class="site-messages" role="status" aria-live="polite">
+        {% for message in messages %}<p class="site-message {{ message.tags }}">{{ message }}</p>{% endfor %}
+    </div>
+    {% endif %}
     <main class="auth-shell" id="feed">
         {% block content %}{% endblock %}
     </main>

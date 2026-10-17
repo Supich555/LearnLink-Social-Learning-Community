@@ -3,5 +3,9 @@ from . import views
 
 urlpatterns = [
     path("", views.community_list, name="community"),
+    path("create/", views.create_community, name="create_community"),
+    path("join/", views.join_community_by_code, name="join_community_by_code"),
+    path("<int:community_id>/join/", views.join_community, name="join_community"),
+    path("<int:community_id>/leave/", views.leave_community, name="leave_community"),
     path("<int:id>/", views.community_detail, name="community_detail"),
 ]

@@ -7,8 +7,18 @@
         </div>
         {% if request.user.pk == post.user_id %}
         <div class="post-owner-actions" data-post-owner-actions>
-            <button class="post-menu post-owner-action-button" type="button" data-post-edit aria-label="แก้ไขโพสต์">แก้ไข</button>
-            <button class="post-menu post-owner-action-button post-delete-action" type="button" data-post-delete aria-label="ลบโพสต์">ลบ</button>
+            <details class="post-edit-details">
+                <summary class="post-menu post-owner-action-button">แก้ไข</summary>
+                <form class="inline-edit-form" action="{% url 'edit_post' post.pk %}" method="post">
+                    {% csrf_token %}<input type="hidden" name="_html" value="1"><input type="hidden" name="next" value="{{ request.get_full_path }}#{{ return_anchor|default:'home-page' }}">
+                    <textarea class="inline-edit-input" name="content" rows="3" required>{{ post.content }}</textarea>
+                    <button class="button-primary" type="submit">บันทึก</button>
+                </form>
+            </details>
+            <form action="{% url 'delete_post' post.pk %}" method="post">
+                {% csrf_token %}<input type="hidden" name="_html" value="1"><input type="hidden" name="next" value="{{ request.get_full_path }}#{{ return_anchor|default:'home-page' }}">
+                <button class="post-menu post-owner-action-button post-delete-action" type="submit">ลบ</button>
+            </form>
         </div>
         {% else %}
         <button class="post-menu" type="button" aria-label="ตัวเลือกโพสต์">···</button>
@@ -23,11 +33,17 @@
         <span data-comment-count>{{ post.comment_set.count }} ความคิดเห็น</span>
     </div>
     <div class="post-actions">
-        <button class="post-action" type="button" data-action="like" aria-pressed="false">♡ ถูกใจ</button>
-        <button class="post-action" type="button" data-action="comment">▢ แสดงความคิดเห็น</button>
-        <button class="post-action" type="button" data-action="save" aria-pressed="false">♧ บันทึก</button>
+        <form action="{% url 'toggle_like' post.pk %}" method="post">
+            {% csrf_token %}<input type="hidden" name="_html" value="1"><input type="hidden" name="next" value="{{ request.get_full_path }}#{{ return_anchor|default:'home-page' }}">
+            <button class="post-action" type="submit" aria-pressed="{% if post.pk in liked_post_ids %}true{% else %}false{% endif %}">{% if post.pk in liked_post_ids %}♥ ถูกใจแล้ว{% else %}♡ ถูกใจ{% endif %}</button>
+        </form>
+        <a class="post-action" href="#comments-{{ post.pk }}">▢ แสดงความคิดเห็น</a>
+        <form action="{% url 'toggle_bookmark' post.pk %}" method="post">
+            {% csrf_token %}<input type="hidden" name="_html" value="1"><input type="hidden" name="next" value="{{ request.get_full_path }}#{{ return_anchor|default:'home-page' }}">
+            <button class="post-action" type="submit" aria-pressed="{% if post.pk in saved_post_ids %}true{% else %}false{% endif %}">{% if post.pk in saved_post_ids %}♧ บันทึกแล้ว{% else %}♧ บันทึก{% endif %}</button>
+        </form>
     </div>
-    <section class="comment-area" data-comment-area hidden>
+    <section class="comment-area" id="comments-{{ post.pk }}">
         <div class="comment-list">
             {% for comment in post.comment_set.all %}
             <div class="comment-item" data-server-comment-id="{{ comment.pk }}">
@@ -37,12 +53,29 @@
                 </div>
                 {% if request.user.pk == comment.user_id %}
                 <div class="comment-owner-actions">
-                    <button class="comment-owner-action" type="button" data-comment-edit="{{ comment.pk }}">แก้ไข</button>
-                    <button class="comment-owner-action comment-delete-action" type="button" data-comment-delete="{{ comment.pk }}">ลบ</button>
+                    <details>
+                        <summary class="comment-owner-action">แก้ไข</summary>
+                        <form class="inline-edit-form" action="{% url 'edit_comment' comment.pk %}" method="post">
+                            {% csrf_token %}<input type="hidden" name="_html" value="1"><input type="hidden" name="next" value="{{ request.get_full_path }}#comments-{{ post.pk }}">
+                            <textarea class="inline-edit-input" name="content" rows="2" required>{{ comment.content }}</textarea>
+                            <button class="button-primary" type="submit">บันทึก</button>
+                        </form>
+                    </details>
+                    <form action="{% url 'delete_comment' comment.pk %}" method="post">
+                        {% csrf_token %}<input type="hidden" name="_html" value="1"><input type="hidden" name="next" value="{{ request.get_full_path }}#comments-{{ post.pk }}">
+                        <button class="comment-owner-action comment-delete-action" type="submit">ลบ</button>
+                    </form>
                 </div>
                 {% endif %}
             </div>
             {% endfor %}
         </div>
+        {% if request.user.is_authenticated %}
+        <form class="comment-form" action="{% url 'create_comment' post.pk %}" method="post">
+            {% csrf_token %}<input type="hidden" name="_html" value="1"><input type="hidden" name="next" value="{{ request.get_full_path }}#comments-{{ post.pk }}">
+            <input class="comment-input" name="content" type="text" placeholder="เขียนความคิดเห็น..." aria-label="เขียนความคิดเห็น" required>
+            <button class="comment-submit" type="submit">ส่ง</button>
+        </form>
+        {% endif %}
     </section>
 </article>

@@ -6,6 +6,7 @@ class Community(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     invite_code = models.CharField(max_length=8, unique=True)
+    is_private = models.BooleanField(default=False)
 
     owner = models.ForeignKey(
         User,

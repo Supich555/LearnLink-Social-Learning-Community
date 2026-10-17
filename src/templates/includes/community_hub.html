@@ -1,0 +1,105 @@
+<section class="prototype-page communities-page" id="communities-page">
+    <section class="welcome-card community-welcome">
+        <p class="eyebrow">FIND YOUR PEOPLE</p>
+        <h1>ชุมชนที่ใช่ เริ่มจากความสนใจเดียวกัน</h1>
+        <p>เรียนรู้ แลกเปลี่ยน และเติบโตไปพร้อมกับเพื่อนร่วมทาง</p>
+    </section>
+    <div class="community-page-heading">
+        <div><h2>สำรวจชุมชน</h2><p>ทุกชุมชนและสมาชิกจัดการด้วย Django</p></div>
+        <div class="community-page-actions">
+            <details class="access-code community-join-code">
+                <summary class="button-secondary">เข้าร่วมด้วยรหัส</summary>
+                <form action="{% url 'join_community_by_code' %}" method="post">
+                    {% csrf_token %}
+                    <label for="community-join-code">รหัสเชิญของชุมชน</label>
+                    <input id="community-join-code" name="invite_code" type="text" placeholder="กรอกรหัสเชิญ" required>
+                    <input type="hidden" name="next" value="/#communities-page">
+                    <button class="button-primary" type="submit">ยืนยันรหัสและเข้าชุมชน</button>
+                </form>
+            </details>
+            <a class="button-primary" href="#community-create">＋ สร้างชุมชน</a>
+        </div>
+    </div>
+    <div class="community-grid">
+        {% for community in communities %}
+        <article class="card community-card">
+            <span class="community-mark">{{ community.name|slice:":2" }}</span>
+            <h3>{{ community.name }}</h3>
+            <p>{{ community.description }}</p>
+            <span class="community-count">{{ community.communitymember_set.count }} สมาชิก · {% if community.is_private %}ส่วนตัว{% else %}สาธารณะ{% endif %}</span>
+            <a class="button-secondary" href="#community-{{ community.pk }}">ดูชุมชน</a>
+        </article>
+        {% empty %}
+        <p class="community-empty-state">ยังไม่มีชุมชน สร้างชุมชนแรกและชวนผู้เรียนมาร่วมกันได้เลย</p>
+        {% endfor %}
+    </div>
+    {% for community in communities %}
+    <section class="card community-detail-preview" id="community-{{ community.pk }}">
+        <a class="button-secondary community-back-link" href="#communities-page">← กลับไปชุมชนทั้งหมด</a>
+        <div class="community-detail-top">
+            <span class="community-mark">{{ community.name|slice:":2" }}</span>
+            <div>
+                <span class="eyebrow">ชุมชน · {% if community.is_private %}ส่วนตัว{% else %}สาธารณะ{% endif %}</span>
+                <h2>{{ community.name }}</h2>
+                <p>{{ community.description }}</p>
+            </div>
+            {% if community.pk in joined_community_ids %}
+            {% if community.owner_id != request.user.pk %}
+            <form action="{% url 'leave_community' community.pk %}" method="post">
+                {% csrf_token %}<input type="hidden" name="next" value="/#communities-page">
+                <button class="button-secondary" type="submit">ออกจากชุมชน</button>
+            </form>
+            {% endif %}
+            {% else %}
+            <form action="{% url 'join_community' community.pk %}" method="post">
+                {% csrf_token %}<input type="hidden" name="next" value="/#community-{{ community.pk }}">
+                {% if community.is_private %}<label class="visually-hidden" for="invite-{{ community.pk }}">รหัสเชิญ</label><input id="invite-{{ community.pk }}" name="invite_code" type="text" placeholder="รหัสเชิญ" required>{% endif %}
+                <button class="button-primary" type="submit">เข้าร่วมชุมชน</button>
+            </form>
+            {% endif %}
+        </div>
+        {% if community.pk in joined_community_ids %}
+        <p class="community-invite-code">รหัสเข้าร่วม: <code>{{ community.invite_code }}</code></p>
+        <section class="community-member-area">
+            <h3>แบ่งปันในชุมชนนี้</h3>
+            <form class="community-post-form" action="{% url 'create_post' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="_html" value="1">
+                <input type="hidden" name="community_id" value="{{ community.pk }}">
+                <input type="hidden" name="next" value="/#community-{{ community.pk }}">
+                <label for="community-content-{{ community.pk }}">เขียนโพสต์</label>
+                <textarea id="community-content-{{ community.pk }}" name="content" rows="3" placeholder="แบ่งปันสิ่งที่กำลังเรียนรู้กับชุมชนนี้..." required></textarea>
+                <button class="button-primary" type="submit">โพสต์ในชุมชน</button>
+            </form>
+        </section>
+        {% endif %}
+        <section class="community-post-wall">
+            <h3>โพสต์ทั้งหมด</h3>
+            {% with return_anchor="community-"|add:community.pk|stringformat:"s" %}
+            <div class="community-post-list feed-list">
+                {% for post in community.post_set.all %}
+                    {% include "includes/post_card.html" with post=post return_anchor=return_anchor %}
+                {% empty %}
+                    <p class="community-post-empty">ยังไม่มีโพสต์ในชุมชนนี้</p>
+                {% endfor %}
+            </div>
+            {% endwith %}
+        </section>
+    </section>
+    {% endfor %}
+    <form class="card edit-preview community-create-panel" id="community-create" action="{% url 'create_community' %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="/#community-create">
+        <h2>สร้างชุมชนใหม่</h2>
+        <label for="new-community-name">ชื่อชุมชน</label>
+        <input id="new-community-name" name="name" type="text" maxlength="100" placeholder="เช่น คนชอบ Data" required>
+        <label for="new-community-description">เกี่ยวกับชุมชน</label>
+        <textarea id="new-community-description" name="description" rows="3" placeholder="ชุมชนนี้พูดคุยหรือเรียนรู้เรื่องอะไร?"></textarea>
+        <fieldset class="visibility-options">
+            <legend>การมองเห็นชุมชน</legend>
+            <label class="visibility-choice"><input type="radio" name="is_private" value="false" checked><span><strong>สาธารณะ</strong><small>ทุกคนค้นหาและเข้าร่วมได้</small></span></label>
+            <label class="visibility-choice"><input type="radio" name="is_private" value="true"><span><strong>ส่วนตัว</strong><small>ต้องใช้รหัสเชิญเพื่อเข้าร่วม</small></span></label>
+        </fieldset>
+        <button class="button-primary" type="submit">สร้างชุมชน</button>
+    </form>
+</section>

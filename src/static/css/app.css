@@ -809,6 +809,47 @@ textarea:focus-visible {
     padding-top: 11px;
 }
 
+.post-actions form,
+.post-owner-actions form,
+.comment-owner-actions form {
+    margin: 0;
+}
+
+.post-edit-details > summary,
+.comment-owner-actions summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.site-messages {
+    position: fixed;
+    z-index: 20;
+    top: 88px;
+    right: 20px;
+    display: grid;
+    gap: 8px;
+    width: min(420px, calc(100vw - 40px));
+}
+
+.site-message {
+    margin: 0;
+    padding: 12px 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.site-message.error {
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.site-message.success {
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+
 .post-action {
     min-height: 38px;
     border: 0;

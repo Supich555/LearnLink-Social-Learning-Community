@@ -77,7 +77,7 @@
             <a href="#home-page"><span class="material-symbols-rounded">home</span><span>หน้าฟีด</span></a>
             <a href="#communities-page"><span class="material-symbols-rounded">groups</span><span>ชุมชน</span></a>
         </nav>
-        <form class="search" action="#home-page" method="get" role="search" data-search-form><span class="material-symbols-rounded search-icon">search</span><input type="search" name="q" placeholder="Search communities, topics..." aria-label="Search communities and topics" data-search-input></form>
+        <form class="search" action="{% url 'home' %}#home-page" method="get" role="search" data-search-form><span class="material-symbols-rounded search-icon">search</span><input type="search" name="q" value="{{ search_query }}" placeholder="Search communities, topics..." aria-label="Search communities and topics" data-search-input><button type="submit" class="visually-hidden">ค้นหา</button></form>
         <div class="topbar-actions"><button class="icon-button notification-button" type="button" aria-label="การแจ้งเตือน"><span class="material-symbols-rounded">notifications</span><span class="notification-dot"></span></button><a class="profile-chip" href="#profile-page" aria-label="โปรไฟล์ {{ request.user.full_name|default:request.user.username }}"><span class="avatar-small">{{ request.user.full_name|default:request.user.username|slice:":1"|upper }}</span><span class="profile-name">{{ request.user.full_name|default:request.user.username }}</span></a></div>
     </header>
     <div class="app-layout prototype-layout">
@@ -92,8 +92,10 @@
                 </a>
                 <section class="joined-communities" aria-label="ชุมชนที่เข้าร่วม">
                     <div class="joined-communities-heading"><p class="joined-communities-label">ชุมชนของฉัน</p><a href="#communities-page" aria-label="สำรวจชุมชน"><span class="material-symbols-rounded">add</span></a></div>
-                    <ul class="joined-community-list" data-joined-community-list></ul>
-                    <p class="joined-community-empty" data-joined-community-empty>ยังไม่มีชุมชนที่เข้าร่วม</p>
+                    <ul class="joined-community-list">
+                        {% for community in joined_communities %}<li><a href="#community-{{ community.pk }}"><span class="joined-community-mark">{{ community.name|slice:":2" }}</span><span>{{ community.name }}</span></a></li>{% empty %}
+                        <li class="joined-community-empty">ยังไม่มีชุมชนที่เข้าร่วม</li>{% endfor %}
+                    </ul>
                 </section>
             </div>
             <div class="sidebar-note"><strong>เรียนรู้ได้ดีกว่าเมื่อแบ่งปัน 🌱</strong><p>ทุกคำถามและทุกไอเดียของคุณ อาจเป็นจุดเริ่มต้นของใครบางคน</p></div>
@@ -105,28 +107,24 @@
                 <section class="welcome-card"><p class="eyebrow">LEARN TOGETHER · GROW TOGETHER</p><h1>สวัสดี {{ request.user.full_name|default:request.user.username }} ✨</h1><p>วันนี้คุณกำลังเรียนรู้อะไรใหม่ ๆ อยู่หรือเปล่า?</p></section>
                 <form class="card composer" id="write-post" action="{% url 'create_post' %}" method="post" enctype="multipart/form-data" data-composer>
                     {% csrf_token %}
+                    <input type="hidden" name="_html" value="1"><input type="hidden" name="next" value="/#home-page">
                     <div class="composer-top"><span class="avatar">{{ request.user.full_name|default:request.user.username|slice:":1"|upper }}</span><textarea class="composer-input" name="content" rows="2" placeholder="วันนี้คุณได้เรียนรู้อะไรใหม่ ๆ บ้าง?" aria-label="เขียนสิ่งที่อยากแบ่งปัน" data-composer-input required></textarea></div>
                     <div class="composer-bottom"><div class="composer-options">
                         <label class="composer-option" for="post-image">▧ รูปภาพ</label><input class="file-input-hidden" id="post-image" name="image" type="file" accept="image/*" data-image-input>
                         <label class="composer-option" for="post-video">▶ วิดีโอสั้น</label><input class="file-input-hidden" id="post-video" name="video" type="file" accept="video/*" data-video-input>
-                        <details class="composer-community-picker" data-composer-community-picker>
-                            <summary class="composer-option" data-composer-community-label>◎ เลือกชุมชน</summary>
-                            <div class="composer-community-menu">
-                                <label class="visually-hidden" for="composer-community-search">ค้นหาชุมชนที่เข้าร่วม</label>
-                                <input id="composer-community-search" type="search" placeholder="ค้นหาชุมชนของฉัน..." data-composer-community-search>
-                                <ul data-composer-community-options></ul>
-                                <p data-composer-community-empty>เข้าร่วมชุมชนก่อน จึงจะเลือกโพสต์ได้</p>
-                            </div>
-                        </details>
+                        <label class="visually-hidden" for="composer-community">เลือกชุมชน</label>
+                        <select class="composer-option" id="composer-community" name="community_id">
+                            <option value="">โพสต์บนฟีดทั่วไป</option>
+                            {% for community in joined_communities %}<option value="{{ community.pk }}">{{ community.name }}</option>{% endfor %}
+                        </select>
                     </div><button class="button-primary publish-button" type="submit">โพสต์</button></div>
-                    <input type="hidden" name="community_id" data-composer-community-id>
                     <div class="composer-image-preview" data-image-preview hidden><img alt="ตัวอย่างรูปที่จะแนบ"><button type="button" data-action="remove-image">ลบรูป</button></div>
                     <video class="composer-video-preview" data-video-preview controls playsinline preload="metadata" aria-label="ตัวอย่างวิดีโอที่จะแนบ" hidden></video>
                     <small class="media-upload-help">วิดีโอไม่เกิน 3 นาที และ 100 MB · จัดเก็บอย่างปลอดภัยบน LearnLink</small>
                 </form>
-                <div class="section-heading"><div><h2>เรื่องราวจากชุมชน</h2><p>ไอเดียดี ๆ เริ่มต้นจากการแบ่งปัน</p></div><span class="text-link">โพสต์ล่าสุด</span></div>
+                <div class="section-heading"><div><h2>เรื่องราวจากชุมชน</h2><p>ไอเดียดี ๆ เริ่มต้นจากการแบ่งปัน</p></div><a class="text-link" href="{% url 'home' %}?saved=1#home-page">โพสต์ที่บันทึกไว้</a></div>
                 <div class="feed-list" data-feed-list>
-                    {% for post in posts %}{% include "includes/post_card.html" with post=post %}{% empty %}
+                    {% for post in posts %}{% include "includes/post_card.html" with post=post return_anchor="home-page" %}{% empty %}
                     <p class="feed-message" data-empty-state>ยังไม่มีโพสต์ เริ่มแบ่งปันสิ่งที่กำลังเรียนรู้ได้เลย</p>
                     {% endfor %}
                 </div>
@@ -142,7 +140,7 @@
                 <input class="file-input-hidden" id="cover-upload" type="file" accept="image/*" aria-label="เลือกรูปภาพปก">
                 <div class="section-heading"><div><h2>โพสต์ของ {{ request.user.full_name|default:request.user.username }}</h2><p>สิ่งที่ฉันกำลังเรียนรู้และแบ่งปัน</p></div></div>
                 <div class="feed-list" data-profile-post-list data-server-rendered="true">
-                    {% for post in profile_posts %}{% include "includes/post_card.html" with post=post %}{% empty %}
+                    {% for post in profile_posts %}{% include "includes/post_card.html" with post=post return_anchor="profile-page" %}{% empty %}
                     <p class="feed-message" data-profile-empty>คุณยังไม่มีโพสต์ที่แบ่งปัน</p>
                     {% endfor %}
                 </div>
@@ -155,6 +153,8 @@
                 </section>
             </section>
 
+            {% include "includes/community_hub.html" %}
+            {% if False %}
             <section class="prototype-page communities-page" id="communities-page">
                 <section class="welcome-card community-welcome"><p class="eyebrow">FIND YOUR PEOPLE</p><h1>ชุมชนที่ใช่ เริ่มจากความสนใจเดียวกัน</h1><p>เรียนรู้ แลกเปลี่ยน และเติบโตไปพร้อมกับเพื่อนร่วมทาง</p></section>
                 <div class="community-page-heading"><div><h2>สำรวจชุมชน</h2><p>เลือกพื้นที่ที่อยากเริ่มต้นเรียนรู้</p></div><div class="community-page-actions"><details class="access-code community-join-code"><summary class="button-secondary">เข้าร่วมด้วยรหัส</summary><form data-community-join-form><label for="community-join-code">รหัสเชิญของชุมชน</label><input id="community-join-code" type="text" placeholder="กรอกรหัสเชิญ" required><button class="button-primary" type="submit">ยืนยันรหัสและเข้าชุมชน</button><small>กรอกรหัสที่เจ้าของชุมชนแชร์ให้</small><p class="community-form-message" data-join-message role="status" hidden></p></form></details><a class="button-primary" href="#community-create">＋ สร้างชุมชน</a></div></div>
@@ -188,6 +188,7 @@
                 </section>
                 <form class="card edit-preview community-create-panel" id="community-create" data-community-create><h2>สร้างชุมชนใหม่</h2><label for="new-community-name">ชื่อชุมชน</label><input id="new-community-name" name="name" type="text" placeholder="เช่น คนชอบ Data" required><label for="new-community-description">เกี่ยวกับชุมชน</label><textarea id="new-community-description" name="description" rows="3" placeholder="ชุมชนนี้พูดคุยหรือเรียนรู้เรื่องอะไร?"></textarea><div class="community-image-control"><label class="button-secondary community-image-picker" for="new-community-image">▧ เพิ่มรูปชุมชน</label><input class="file-input-hidden" id="new-community-image" type="file" accept="image/*" data-community-image-input><img class="community-image-preview" data-community-image-preview alt="ตัวอย่างรูปชุมชน" hidden></div><fieldset class="visibility-options"><legend>การมองเห็นชุมชน</legend><label class="visibility-choice"><input type="radio" name="community-visibility" value="public" checked><span><strong>สาธารณะ</strong><small>ทุกคนค้นหาและเข้าร่วมได้ พร้อมรหัสสุ่มสำหรับแชร์</small></span></label><label class="visibility-choice"><input type="radio" name="community-visibility" value="private"><span><strong>ส่วนตัว</strong><small>ต้องใช้รหัสเชิญเพื่อเข้าร่วม</small></span></label></fieldset><div class="public-code-field"><label for="generated-community-code">รหัสสุ่มสำหรับเข้าร่วม</label><div class="generated-code-row"><input id="generated-community-code" type="text" data-generated-community-code readonly><button class="button-secondary" type="button" data-regenerate-community-code>สุ่มรหัสใหม่</button></div><small>แชร์รหัสนี้ให้ผู้เรียนเข้าร่วมได้ แม้ค้นหาชุมชนไม่เจอ</small></div><div class="private-code-field"><label for="new-community-code">ตั้งรหัสเชิญ</label><input id="new-community-code" name="private-code" type="text" placeholder="กำหนดรหัสสำหรับสมาชิก"></div><button class="button-primary" type="submit">สร้างชุมชน</button><p class="community-form-message" data-create-message role="status" hidden></p></form>
             </section>
+            {% endif %}
         </main>
         <aside class="sidebar right-sidebar prototype-right-sidebar">
             <section class="card side-card"><h2>หัวข้อกำลังมาแรง</h2><div class="topic-list"><a class="topic-item" href="#home-page"><span class="topic-name">#Python</span><span class="topic-count">128 โพสต์</span></a><a class="topic-item" href="#home-page"><span class="topic-name">#Django</span><span class="topic-count">86 โพสต์</span></a><a class="topic-item" href="#home-page"><span class="topic-name">#ออกแบบ UX</span><span class="topic-count">54 โพสต์</span></a></div></section>

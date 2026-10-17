@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from django.test import TestCase
 from django.urls import reverse
 
-from post.models import Comment, Post
+from post.models import Bookmark, Comment, Like, Post
 from post.views import MAX_VIDEO_SIZE, _validate_video
 from users.models import User
 
@@ -109,3 +109,41 @@ class PostApiTests(TestCase):
             content_type="video/mp4",
         )
         self.assertEqual(_validate_video(oversized_video), "วิดีโอต้องมีขนาดไม่เกิน 100 MB")
+
+    def test_like_and_bookmark_toggles_are_persisted_per_user(self):
+        self.client.force_login(self.author)
+        like_url = reverse("toggle_like", args=[self.post.pk])
+        bookmark_url = reverse("toggle_bookmark", args=[self.post.pk])
+
+        self.assertEqual(self.client.post(like_url).json(), {"liked": True})
+        self.assertTrue(Like.objects.filter(post=self.post, user=self.author).exists())
+        self.assertEqual(self.client.post(like_url).json(), {"liked": False})
+        self.assertFalse(Like.objects.filter(post=self.post, user=self.author).exists())
+
+        self.assertEqual(self.client.post(bookmark_url).json(), {"saved": True})
+        self.assertTrue(Bookmark.objects.filter(post=self.post, user=self.author).exists())
+        self.assertEqual(self.client.post(bookmark_url).json(), {"saved": False})
+        self.assertFalse(Bookmark.objects.filter(post=self.post, user=self.author).exists())
+
+    def test_html_post_forms_redirect_and_persist(self):
+        self.client.force_login(self.author)
+        response = self.client.post(
+            reverse("create_post"),
+            {"content": "โพสต์ผ่านฟอร์ม", "_html": "1", "next": "/#home-page"},
+        )
+
+        self.assertRedirects(response, "/#home-page", fetch_redirect_response=False)
+        self.assertTrue(Post.objects.filter(user=self.author, content="โพสต์ผ่านฟอร์ม").exists())
+
+    def test_saved_feed_filter_and_search_are_server_rendered(self):
+        matching_post = Post.objects.create(user=self.other_user, content="Django สำหรับผู้เรียน")
+        Post.objects.create(user=self.other_user, content="หัวข้ออื่น")
+        Bookmark.objects.create(post=matching_post, user=self.author)
+        self.client.force_login(self.author)
+
+        saved_response = self.client.get(reverse("home"), {"saved": "1"})
+        self.assertEqual(list(saved_response.context["posts"]), [matching_post])
+        self.assertContains(saved_response, "โพสต์ที่บันทึกไว้")
+
+        search_response = self.client.get(reverse("home"), {"q": "Django"})
+        self.assertEqual(list(search_response.context["posts"]), [matching_post])
