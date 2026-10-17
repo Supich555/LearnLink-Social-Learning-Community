@@ -91,13 +91,20 @@
         const attach = async (element, id) => {
             try {
                 const record = await get(id);
-                if (!record?.blob || !element.isConnected) return;
+                if (!element.isConnected) return;
+                if (!record?.blob) throw new Error("ไม่พบไฟล์วิดีโอในที่เก็บของเบราว์เซอร์");
                 const source = URL.createObjectURL(record.blob);
                 element.dataset.objectUrl = source;
                 element.src = source;
                 element.load();
             } catch (error) {
                 console.error("Could not load LearnLink video.", error);
+                if (element.isConnected) {
+                    const message = document.createElement("p");
+                    message.className = "media-load-error";
+                    message.textContent = "ไม่สามารถโหลดวิดีโอนี้จากที่เก็บในเบราว์เซอร์ได้";
+                    element.replaceWith(message);
+                }
             }
         };
 
@@ -190,6 +197,7 @@
         ? storedComments
         : {};
     const feedList = document.querySelector("[data-feed-list]");
+    const profilePostList = document.querySelector("[data-profile-post-list]");
     const searchInput = document.querySelector("[data-search-input], .prototype-topbar .search input");
     let savedOnly = false;
     let activeQuery = (searchInput?.value || "").trim().toLocaleLowerCase();
@@ -261,11 +269,12 @@
         header.append(avatar, author);
         if (post.author === currentUserName && post.id) {
             const ownerActions = createElement("div", "post-owner-actions");
-            const edit = createElement("button", "post-menu", "✎");
+            ownerActions.dataset.postOwnerActions = "";
+            const edit = createElement("button", "post-menu post-owner-action-button", "แก้ไข");
             edit.type = "button";
             edit.dataset.postEdit = "";
             edit.setAttribute("aria-label", "แก้ไขโพสต์");
-            const remove = createElement("button", "post-menu post-delete-action", "×");
+            const remove = createElement("button", "post-menu post-owner-action-button post-delete-action", "ลบ");
             remove.type = "button";
             remove.dataset.postDelete = "";
             remove.setAttribute("aria-label", "ลบโพสต์");
@@ -323,6 +332,36 @@
         return card;
     };
 
+    const renderProfilePosts = () => {
+        if (!profilePostList) return;
+        if (profilePostList.dataset.serverRendered === "true") return;
+        const posts = readArray(storageKeys.posts).filter((post) =>
+            post && post.author === currentUserName && typeof post.content === "string");
+        const emptyState = createElement("p", "feed-message", "คุณยังไม่มีโพสต์ที่แบ่งปัน");
+        emptyState.dataset.profileEmpty = "";
+        profilePostList.replaceChildren(
+            ...posts.map((post) => createPostCard(post)),
+            ...(posts.length ? [] : [emptyState]),
+        );
+        profilePostList.querySelectorAll("[data-post-card]").forEach(updatePostControls);
+        const count = document.querySelector(".profile-cover .profile-stats strong");
+        if (count) count.textContent = String(posts.length).padStart(2, "0");
+    };
+
+    const updateRenderedPost = (postId, post) => {
+        document.querySelectorAll("[data-local-post-id]").forEach((card) => {
+            if (card.dataset.localPostId !== postId) return;
+            const content = card.querySelector(".post-content");
+            if (content) content.textContent = post.content;
+            card.dataset.topic = post.kind || "";
+            const communityTag = card.querySelector(".post-community");
+            if (post.kind && communityTag) communityTag.textContent = `#${post.kind}`;
+            else if (post.kind) card.insertBefore(createElement("span", "post-community", `#${post.kind}`), content);
+            else communityTag?.remove();
+        });
+        renderProfilePosts();
+    };
+
     const hashText = (value) => {
         let hash = 2166136261;
         for (let index = 0; index < value.length; index += 1) {
@@ -361,6 +400,7 @@
 
     const updatePostControls = (card) => {
         const key = getPostKey(card);
+        baseCount(card, "[data-comment-count]");
         const likeButton = card.querySelector('[data-action="like"]');
         const saveButton = card.querySelector('[data-action="save"]');
         if (likeButton) {
@@ -376,12 +416,14 @@
             saveButton.setAttribute("aria-pressed", String(saved));
             saveButton.textContent = saved ? "♧ บันทึกแล้ว" : "♧ บันทึก";
         }
-        const comments = normalizeComments(Array.isArray(savedComments[key]) ? savedComments[key] : []);
-        const count = baseCount(card, "[data-comment-count]") + comments.length;
-        const commentCounter = card.querySelector("[data-comment-count]");
-        if (commentCounter) commentCounter.textContent = `${count} ความคิดเห็น`;
-        const commentArea = card.querySelector("[data-comment-area]");
-        if (commentArea) renderComments(commentArea, comments);
+        if (!card.dataset.serverPostId) {
+            const comments = normalizeComments(Array.isArray(savedComments[key]) ? savedComments[key] : []);
+            const count = baseCount(card, "[data-comment-count]") + comments.length;
+            const commentCounter = card.querySelector("[data-comment-count]");
+            if (commentCounter) commentCounter.textContent = `${count} ความคิดเห็น`;
+            const commentArea = card.querySelector("[data-comment-area]");
+            if (commentArea) renderComments(commentArea, comments);
+        }
     };
 
     const renderComments = (area, comments) => {
@@ -469,6 +511,23 @@
                 event.preventDefault();
                 const value = input.value.trim();
                 if (!value) return;
+                if (card.dataset.serverPostId) {
+                    fetch(`/post/${card.dataset.serverPostId}/comments/create/`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")?.value || "",
+                            "Accept": "application/json",
+                        },
+                        credentials: "same-origin",
+                        body: JSON.stringify({ content: value }),
+                    }).then(async (response) => {
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error || "บันทึกความคิดเห็นไม่สำเร็จ");
+                        window.location.reload();
+                    }).catch((error) => showToast(error instanceof Error ? error.message : "บันทึกความคิดเห็นไม่สำเร็จ"));
+                    return;
+                }
                 const key = getPostKey(card);
                 const comments = normalizeComments(Array.isArray(savedComments[key]) ? savedComments[key] : []);
                 comments.push({
@@ -495,19 +554,12 @@
     };
 
     const restoreLocalPosts = () => {
-        if (!feedList) return;
-        const posts = readArray(storageKeys.posts);
-        for (const post of posts.slice().reverse()) {
-            if (!post || !post.id || typeof post.content !== "string") continue;
-            feedList.prepend(createPostCard(post));
-        }
-        for (const card of feedList.querySelectorAll("[data-post-card]")) {
-            updatePostControls(card);
-        }
+        document.querySelectorAll("[data-post-card]").forEach(updatePostControls);
         filterPosts();
+        renderProfilePosts();
     };
 
-    if (feedList) restoreLocalPosts();
+    if (feedList || profilePostList) restoreLocalPosts();
 
     document.querySelector("[data-search-form]")?.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -537,6 +589,33 @@
             input.addEventListener("input", () => input.setCustomValidity(""), { once: true });
             return;
         }
+        const communityId = form.dataset.communityId || "";
+        if (!communityId || /^\d+$/.test(communityId)) {
+            const submitButton = form.querySelector("[type=submit]");
+            if (videoInput?.files?.length && !selectedVideo) {
+                showToast("รอตรวจสอบไฟล์วิดีโอสักครู่แล้วลองโพสต์อีกครั้ง");
+                return;
+            }
+            if (submitButton) submitButton.disabled = true;
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    headers: {
+                        "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]")?.value || "",
+                        "Accept": "application/json",
+                    },
+                    credentials: "same-origin",
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || "บันทึกโพสต์ไม่สำเร็จ");
+                window.location.reload();
+            } catch (error) {
+                showToast(error instanceof Error ? error.message : "บันทึกโพสต์ไม่สำเร็จ");
+                if (submitButton) submitButton.disabled = false;
+            }
+            return;
+        }
         const postId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const videoId = selectedVideo ? `post-${postId}` : "";
         const submitButton = form.querySelector("[type=submit]");
@@ -548,7 +627,7 @@
                 console.error("Could not store selected post video.", error);
                 showToast(error instanceof DOMException && error.name === "QuotaExceededError"
                     ? "พื้นที่จัดเก็บวิดีโอในเบราว์เซอร์ไม่เพียงพอ"
-                    : "บันทึกวิดีโอไม่สำเร็จ กรุณาลองใหม่");
+                    : error instanceof Error ? error.message : "บันทึกวิดีโอไม่สำเร็จ กรุณาลองใหม่");
                 if (submitButton) submitButton.disabled = false;
                 return;
             }
@@ -571,12 +650,14 @@
         const saved = persistPost(post);
         if (!saved) {
             card.remove();
+            if (emptyState && !feedList?.querySelector("[data-post-card]")) emptyState.hidden = false;
             if (videoId) {
                 videoStore.remove(videoId).catch((error) => console.error("Could not remove an unreferenced post video.", error));
             }
             if (submitButton) submitButton.disabled = false;
             return;
         }
+        renderProfilePosts();
         input.value = "";
         delete form.dataset.image;
         selectedFeedVideos.delete(form);
@@ -624,8 +705,8 @@
             event.currentTarget.value = "";
             return;
         }
-        if (file.size > 1024 * 1024) {
-            showToast("รูปภาพต้องมีขนาดไม่เกิน 1 MB เพื่อบันทึกบนอุปกรณ์");
+        if (file.size > 10 * 1024 * 1024) {
+            showToast("รูปภาพต้องมีขนาดไม่เกิน 10 MB");
             event.currentTarget.value = "";
             return;
         }
@@ -684,6 +765,36 @@
         const editPostButton = target.closest("[data-post-edit]");
         if (editPostButton) {
             const card = editPostButton.closest("[data-post-card]");
+            if (card?.dataset.serverPostId) {
+                const content = card.querySelector(".post-content");
+                if (!content || card.querySelector(".inline-edit-form")) return;
+                const originalContent = content.textContent.trim();
+                const editor = createInlineEditor(originalContent, async (updatedContent) => {
+                    try {
+                        const response = await fetch(`/post/${card.dataset.serverPostId}/edit/`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")?.value || "",
+                                "Accept": "application/json",
+                            },
+                            credentials: "same-origin",
+                            body: JSON.stringify({ content: updatedContent }),
+                        });
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error || "แก้ไขโพสต์ไม่สำเร็จ");
+                        document.querySelectorAll(`[data-server-post-id="${card.dataset.serverPostId}"] .post-content`)
+                            .forEach((item) => { item.textContent = result.post.content; });
+                        editor.remove();
+                        showToast("แก้ไขโพสต์แล้ว");
+                    } catch (error) {
+                        showToast(error instanceof Error ? error.message : "แก้ไขโพสต์ไม่สำเร็จ");
+                    }
+                }, () => editor.remove());
+                content.after(editor);
+                editor.querySelector("textarea")?.focus();
+                return;
+            }
             const postId = card?.dataset.localPostId;
             const post = readArray(storageKeys.posts).find((item) => item.id === postId);
             const content = card?.querySelector(".post-content");
@@ -698,7 +809,7 @@
                 }
                 posts[index] = { ...posts[index], content: updatedContent, updatedAt: new Date().toISOString() };
                 if (!writeStorage(storageKeys.posts, posts)) return;
-                content.textContent = updatedContent;
+                updateRenderedPost(postId, posts[index]);
                 editor.remove();
                 window.dispatchEvent(new CustomEvent("learnlink:community-post-updated", {
                     detail: { postId, communityId: post.communityId },
@@ -714,6 +825,40 @@
         const deletePostButton = target.closest("[data-post-delete]");
         if (deletePostButton) {
             const card = deletePostButton.closest("[data-post-card]");
+            if (card?.dataset.serverPostId) {
+                if (!window.confirm("ต้องการลบโพสต์นี้หรือไม่?")) return;
+                try {
+                    const response = await fetch(`/post/${card.dataset.serverPostId}/delete/`, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")?.value || "",
+                            "Accept": "application/json",
+                        },
+                        credentials: "same-origin",
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || "ลบโพสต์ไม่สำเร็จ");
+                    document.querySelectorAll(`[data-server-post-id="${card.dataset.serverPostId}"]`).forEach((item) => item.remove());
+                    [
+                        [feedList, "data-empty-state", "ยังไม่มีโพสต์ เริ่มแบ่งปันสิ่งที่กำลังเรียนรู้ได้เลย"],
+                        [profilePostList, "data-profile-empty", "คุณยังไม่มีโพสต์ที่แบ่งปัน"],
+                    ].forEach(([list, marker, message]) => {
+                        if (!list || list.querySelector("[data-post-card]")) return;
+                        let emptyState = list.querySelector(`[${marker}]`);
+                        if (!emptyState) {
+                            emptyState = createElement("p", "feed-message", message);
+                            emptyState.setAttribute(marker, "");
+                            list.append(emptyState);
+                        }
+                        emptyState.hidden = false;
+                    });
+                    filterPosts();
+                    showToast("ลบโพสต์แล้ว");
+                } catch (error) {
+                    showToast(error instanceof Error ? error.message : "ลบโพสต์ไม่สำเร็จ");
+                }
+                return;
+            }
             const postId = card?.dataset.localPostId;
             const post = readArray(storageKeys.posts).find((item) => item.id === postId);
             if (!card || !post || post.author !== currentUserName) return;
@@ -736,7 +881,12 @@
             savedPosts.delete(key);
             writeStorage(storageKeys.likes, [...likedPosts]);
             writeStorage(storageKeys.saved, [...savedPosts]);
-            card.remove();
+            document.querySelectorAll("[data-local-post-id]").forEach((renderedCard) => {
+                if (renderedCard.dataset.localPostId !== postId) return;
+                videoStore.release(renderedCard);
+                renderedCard.remove();
+            });
+            renderProfilePosts();
             filterPosts();
             window.dispatchEvent(new CustomEvent("learnlink:community-post-deleted", {
                 detail: { postId, communityId: post.communityId },
@@ -755,6 +905,34 @@
             const item = editCommentButton.closest(".comment-item");
             const key = card ? getPostKey(card) : "";
             const commentId = editCommentButton.dataset.commentEdit;
+            if (card?.dataset.serverPostId && item?.dataset.serverCommentId) {
+                const content = item.querySelector(".comment-content");
+                if (!content || item.querySelector(".inline-edit-form")) return;
+                const editor = createInlineEditor(content.textContent.trim(), async (updatedContent) => {
+                    try {
+                        const response = await fetch(`/post/comments/${item.dataset.serverCommentId}/edit/`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")?.value || "",
+                                "Accept": "application/json",
+                            },
+                            credentials: "same-origin",
+                            body: JSON.stringify({ content: updatedContent }),
+                        });
+                        const result = await response.json();
+                        if (!response.ok) throw new Error(result.error || "แก้ไขความคิดเห็นไม่สำเร็จ");
+                        content.textContent = result.comment.content;
+                        editor.remove();
+                        showToast("แก้ไขความคิดเห็นแล้ว");
+                    } catch (error) {
+                        showToast(error instanceof Error ? error.message : "แก้ไขความคิดเห็นไม่สำเร็จ");
+                    }
+                }, () => editor.remove());
+                content.after(editor);
+                editor.querySelector("textarea")?.focus();
+                return;
+            }
             const comments = normalizeComments(Array.isArray(savedComments[key]) ? savedComments[key] : []);
             const comment = comments.find((entry) => entry.id === commentId);
             if (!item || !comment || comment.author !== currentUserName) return;
@@ -778,6 +956,34 @@
         const deleteCommentButton = target.closest("[data-comment-delete]");
         if (deleteCommentButton) {
             const card = deleteCommentButton.closest("[data-post-card]");
+            const commentItem = deleteCommentButton.closest(".comment-item");
+            if (card?.dataset.serverPostId && commentItem?.dataset.serverCommentId) {
+                if (!window.confirm("ต้องการลบความคิดเห็นนี้หรือไม่?")) return;
+                try {
+                    const response = await fetch(`/post/comments/${commentItem.dataset.serverCommentId}/delete/`, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")?.value || "",
+                            "Accept": "application/json",
+                        },
+                        credentials: "same-origin",
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || "ลบความคิดเห็นไม่สำเร็จ");
+                    document.querySelectorAll(`[data-server-post-id="${card.dataset.serverPostId}"] .comment-item[data-server-comment-id="${commentItem.dataset.serverCommentId}"]`)
+                        .forEach((item) => item.remove());
+                    document.querySelectorAll(`[data-server-post-id="${card.dataset.serverPostId}"] [data-comment-count]`)
+                        .forEach((countElement) => {
+                        const count = Math.max(0, Number.parseInt(countElement.dataset.baseCount || "0", 10) - 1);
+                        countElement.dataset.baseCount = String(count);
+                        countElement.textContent = `${count} ความคิดเห็น`;
+                        });
+                    showToast("ลบความคิดเห็นแล้ว");
+                } catch (error) {
+                    showToast(error instanceof Error ? error.message : "ลบความคิดเห็นไม่สำเร็จ");
+                }
+                return;
+            }
             const key = card ? getPostKey(card) : "";
             const commentId = deleteCommentButton.dataset.commentDelete;
             const comments = normalizeComments(Array.isArray(savedComments[key]) ? savedComments[key] : []);
@@ -1472,7 +1678,7 @@
         videoPreview.hidden = true;
         const uploadHelp = document.createElement("small");
         uploadHelp.className = "media-upload-help";
-        uploadHelp.textContent = "วิดีโอไม่เกิน 3 นาที และ 100 MB";
+        uploadHelp.textContent = "วิดีโอไม่เกิน 3 นาที และ 100 MB · จัดเก็บในเบราว์เซอร์นี้";
         const message = document.createElement("p");
         message.className = "community-form-message";
         message.dataset.postMessage = "";
@@ -1743,6 +1949,12 @@
         if (!composer) return;
         composer.dataset.communityId = button.dataset.communityId;
         composer.dataset.communityName = button.dataset.communityName;
+        const communityIdField = composer.querySelector("[data-composer-community-id]");
+        if (communityIdField) {
+            communityIdField.value = /^\d+$/.test(button.dataset.communityId || "")
+                ? button.dataset.communityId
+                : "";
+        }
         delete composer.dataset.postKind;
         const label = composerPicker.querySelector("[data-composer-community-label]");
         if (label) label.textContent = `◎ ${button.dataset.communityName}`;
@@ -2078,7 +2290,7 @@
                     console.error("Could not store selected community video.", error);
                     showMessage(form.querySelector("[data-post-message]"), error instanceof DOMException && error.name === "QuotaExceededError"
                         ? "พื้นที่จัดเก็บวิดีโอในเบราว์เซอร์ไม่เพียงพอ"
-                        : "บันทึกวิดีโอไม่สำเร็จ กรุณาลองใหม่", true);
+                        : error instanceof Error ? error.message : "บันทึกวิดีโอไม่สำเร็จ กรุณาลองใหม่", true);
                     if (submitButton) submitButton.disabled = false;
                     return;
                 }
@@ -2323,6 +2535,9 @@
             }
             renderCommunityPosts();
             showCommunityToast("ลบโพสต์แล้ว");
+            if (post.videoId) {
+                videoStore.remove(post.videoId).catch((error) => console.error("Could not remove a deleted community video.", error));
+            }
             return;
         }
 
@@ -2452,6 +2667,11 @@
             }
             renderCommunityPosts();
             showMessage(message, "ลบโพสต์และความคิดเห็นทั้งหมดในชุมชนแล้ว");
+            [...removedCommunityPosts, ...removedFeedPosts].forEach((post) => {
+                if (post.videoId) {
+                    videoStore.remove(post.videoId).catch((error) => console.error("Could not remove a cleared community video.", error));
+                }
+            });
             return;
         }
 
@@ -2469,6 +2689,10 @@
             }
             const community = safeCreatedCommunities[index];
             if (!window.confirm(`ต้องการลบชุมชน “${community.name}” และโพสต์ทั้งหมดหรือไม่?`)) return;
+            const communityVideoIds = [
+                ...readArray(communityPostsStorageKey).filter((post) => post.communityId === community.id),
+                ...readArray("learnlink.posts.v1").filter((post) => post.communityId === community.id),
+            ].map((post) => post.videoId).filter(Boolean);
 
             const storageChanges = [
                 {
@@ -2520,6 +2744,9 @@
             updateJoinButtons();
             filterCommunities();
             renderCommunityPosts();
+            communityVideoIds.forEach((videoId) => {
+                videoStore.remove(videoId).catch((error) => console.error("Could not remove a deleted community video.", error));
+            });
             if (window.location.hash === `#created-community-${community.id}`) {
                 window.location.hash = "#communities-page";
             }

@@ -108,7 +108,9 @@ textarea:focus-visible {
 
 .search {
     position: relative;
-    width: min(430px, 38vw);
+    width: auto;
+    max-width: 760px;
+    flex: 1 1 560px;
 }
 
 .search-icon {
@@ -752,6 +754,45 @@ textarea:focus-visible {
     object-fit: cover;
 }
 
+.post-video {
+    display: block;
+    width: 100%;
+    max-height: 520px;
+    margin: 14px 0;
+    border-radius: 15px;
+    background: #111827;
+}
+
+.composer-video-preview,
+.community-post-video-preview {
+    display: block;
+    width: min(100%, 480px);
+    max-height: 320px;
+    margin-top: 10px;
+    border-radius: 11px;
+    background: #111827;
+}
+
+.composer-video-preview[hidden],
+.community-post-video-preview[hidden] {
+    display: none;
+}
+
+.media-upload-help {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.media-load-error {
+    padding: 12px;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: var(--danger);
+    font-size: 12px;
+}
+
 .post-stats {
     display: flex;
     justify-content: space-between;
@@ -1274,6 +1315,18 @@ body:has(#app-preview .prototype-page:target, #app-preview .prototype-page :targ
     display: none;
 }
 
+.is-authenticated #app-preview {
+    display: block;
+}
+
+.is-authenticated #home-page {
+    display: block;
+}
+
+.is-authenticated .prototype-layout:has(.prototype-page:target, .prototype-page :target) #home-page:not(:target) {
+    display: none;
+}
+
 #app-preview:has(.prototype-page:target, .prototype-page :target) {
     display: block;
 }
@@ -1307,8 +1360,23 @@ body:has(#app-preview .prototype-page:target, #app-preview .prototype-page :targ
 .login-again {
     display: inline-flex;
     margin: 22px 0 0 13px;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--muted);
     font-size: 11px;
+    cursor: pointer;
+}
+
+.login-again-form,
+.profile-logout-form {
+    display: inline-flex;
+}
+
+.auth-message {
+    margin: 12px 0;
+    color: var(--danger);
+    font-size: 13px;
 }
 
 .profile-cover {
@@ -2081,6 +2149,15 @@ body:has(#app-preview .prototype-page:target, #app-preview .prototype-page :targ
     object-fit: cover;
 }
 
+.community-post-video {
+    display: block;
+    width: min(100%, 640px);
+    max-height: 420px;
+    margin-top: 10px;
+    border-radius: 11px;
+    background: #111827;
+}
+
 .community-comment-area {
     display: grid;
     gap: 8px;
@@ -2549,6 +2626,14 @@ body:has(#app-preview .prototype-page:target, #app-preview .prototype-page :targ
 .post-owner-actions .post-menu {
     margin: 0;
     text-decoration: none;
+}
+
+.post-owner-actions .post-owner-action-button {
+    width: auto;
+    min-width: 42px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .post-stats a {
