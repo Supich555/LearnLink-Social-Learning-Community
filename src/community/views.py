@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
-from django.utils.crypto import get_random_string
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
@@ -37,16 +36,17 @@ def create_community(request):
         messages.error(request, "กรุณากรอกชื่อชุมชนไม่เกิน 100 ตัวอักษร")
         return _redirect_to(request, "/#community-create")
 
-    code = get_random_string(8, allowed_chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
-    while Community.objects.filter(invite_code=code).exists():
-        code = get_random_string(8, allowed_chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
+    # สร้าง Community โดยยังไม่ต้องสร้าง code เอง
     community = Community.objects.create(
         name=name,
         description=description or "พื้นที่สำหรับแบ่งปันและเรียนรู้ไปด้วยกัน",
-        invite_code=code,
         is_private=request.POST.get("is_private") == "true",
         owner=request.user,
     )
+    
+    # Encapsulation: เรียกใช้ Helper Method จาก Model เพื่อสร้าง Invite Code
+    code = community.generate_invite_code()
+    
     CommunityMember.objects.get_or_create(community=community, user=request.user)
     messages.success(request, f"สร้างชุมชน {community.name} แล้ว · รหัสเชิญ {code}")
     return _redirect_to(request, f"/#community-{community.pk}")
@@ -80,7 +80,7 @@ def join_community_by_code(request):
 @login_required
 @require_POST
 def leave_community(request, community_id):
-    community = get_object_or_404(Community, pk=community_id)
+    community = get_object_or_404(Community, id=community_id)
     if community.owner_id == request.user.pk:
         messages.error(request, "เจ้าของชุมชนไม่สามารถออกจากชุมชนได้")
     else:
