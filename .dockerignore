@@ -1,0 +1,14 @@
+.venv
+.git
+.gitignore
+
+__pycache__
+*.pyc
+
+.vscode
+
+media
+
+staticfiles
+
+.env

@@ -1,0 +1,35 @@
+<aside class="sidebar right-sidebar" aria-label="หัวข้อและชุมชนแนะนำ">
+    <section class="card side-card" id="topics">
+        <h2>หัวข้อกำลังมาแรง</h2>
+        <div class="topic-list">
+            {% for topic in trending_topics %}
+                <a class="topic-item" href="#post-feed">
+                    <span class="topic-name">#{{ topic.name }}</span>
+                    <span class="topic-count">{{ topic.post_count }} โพสต์</span>
+                </a>
+            {% empty %}
+                <a class="topic-item" href="#post-feed"><span class="topic-name">#Python</span><span class="topic-count">128 โพสต์</span></a>
+                <a class="topic-item" href="#post-feed"><span class="topic-name">#Django</span><span class="topic-count">86 โพสต์</span></a>
+            {% endfor %}
+        </div>
+    </section>
+    <section class="card side-card" id="communities">
+        <div class="side-heading">
+            <h2>ชุมชนที่น่าสนใจ</h2>
+            <a href="#community-list">ดูทั้งหมด</a>
+        </div>
+        <div class="community-list">
+            {% for community in suggested_communities %}
+                <a class="community-item" href="#community-list">
+                    <span class="community-mark">{{ community.name|slice:":1"|upper }}</span>
+                    <span class="community-info"><strong>{{ community.name }}</strong><span class="community-count">{{ community.member_count }} สมาชิก</span></span>
+                    <span class="community-join">ดู</span>
+                </a>
+            {% empty %}
+                <a class="community-item" href="#community-list"><span class="community-mark">P</span><span class="community-info"><strong>คนรัก Python</strong><span class="community-count">240 สมาชิก</span></span><span class="community-join">ดู</span></a>
+                <a class="community-item" href="#community-list"><span class="community-mark">U</span><span class="community-info"><strong>ห้องเรียน UX/UI</strong><span class="community-count">128 สมาชิก</span></span><span class="community-join">ดู</span></a>
+            {% endfor %}
+        </div>
+        <a class="button-secondary side-create-community" href="#community-create">＋ สร้างชุมชนใหม่</a>
+    </section>
+</aside>

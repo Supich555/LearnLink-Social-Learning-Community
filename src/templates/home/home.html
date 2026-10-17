@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}LearnLink | เข้าสู่ระบบ{% endblock %}
+{% block content %}
+<section class="auth-landing">
+    <a class="brand auth-brand" href="#login-page"><span class="brand-mark">L</span><span>Learn<span>Link</span></span></a>
+    <section class="auth-screen" id="login-page">
+        <div class="auth-hero">
+            <div class="auth-copy">
+                <span class="eyebrow">LEARN TOGETHER · GROW TOGETHER</span>
+                <h1>ทุกสิ่งที่เรียนรู้<br>เติบโตได้เมื่อแบ่งปัน</h1>
+                <p>พื้นที่ของคนชอบเรียนรู้ มาแลกเปลี่ยนไอเดีย ถามคำถาม และเติบโตไปพร้อมกับชุมชนที่ใช่</p>
+                <div class="auth-proof"><span class="proof-avatars">ล　ม　พ</span><span>เรียนรู้ไปด้วยกันกับชุมชนของเรา</span></div>
+            </div>
+            <section class="card auth-card">
+                <span class="auth-kicker">ยินดีต้อนรับสู่ชุมชน</span>
+                <h2>เข้าสู่ระบบ LearnLink</h2>
+                <p class="auth-subtitle">เข้าสู่ระบบเพื่อไปยังฟีดและชุมชนของคุณ</p>
+                <form class="auth-form" action="#home-page" method="get">
+                    <label for="login-email">อีเมลหรือชื่อผู้ใช้</label>
+                    <input id="login-email" type="text" placeholder="you@example.com" autocomplete="username">
+                    <label for="login-password">รหัสผ่าน</label>
+                    <input id="login-password" type="password" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
+                    <a class="forgot-link" href="#login-page">ลืมรหัสผ่าน?</a>
+                    <button class="button-primary auth-submit" type="submit">เข้าสู่ระบบ</button>
+                </form>
+                <div class="auth-divider"><span>หรือ</span></div>
+                <a class="button-secondary auth-submit signup-button" href="#signup-page">สร้างบัญชีใหม่</a>
+                <p class="auth-terms">การดำเนินการต่อถือว่าคุณยอมรับข้อกำหนดการใช้งานและนโยบายความเป็นส่วนตัว</p>
+                <p class="signup-success" id="account-created" role="status">สร้างบัญชีตัวอย่างเรียบร้อยแล้ว กรุณาเข้าสู่ระบบ</p>
+            </section>
+        </div>
+        <div class="auth-feature-row">
+            <div><span>✦</span><strong>แบ่งปันความรู้</strong><p>เรื่องเล็ก ๆ ของคุณอาจเป็นคำตอบที่ใครกำลังหา</p></div>
+            <div><span>◎</span><strong>พบชุมชนที่ใช่</strong><p>เรียนรู้ร่วมกับคนที่สนใจในเรื่องเดียวกัน</p></div>
+            <div><span>↗</span><strong>เติบโตไปด้วยกัน</strong><p>ถาม แชร์ และต่อยอดไอเดียใหม่ ๆ</p></div>
+        </div>
+    </section>
+
+    <section class="auth-screen signup-screen" id="signup-page">
+        <div class="auth-hero">
+            <div class="auth-copy">
+                <span class="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span>
+                <h1>มาเรียนรู้<br>ไปด้วยกันนะ</h1>
+                <p>สร้างบัญชี LearnLink แล้วเริ่มแบ่งปันความรู้ พบเพื่อน และเติบโตไปกับชุมชน</p>
+            </div>
+            <section class="card auth-card">
+                <span class="auth-kicker">สร้างบัญชีฟรี</span>
+                <h2>เข้าร่วม LearnLink</h2>
+                <p class="auth-subtitle">กรอกข้อมูลเพื่อเริ่มต้นชุมชนการเรียนรู้ของคุณ</p>
+                <form class="auth-form" action="#account-created" method="get">
+                    <label for="signup-name">ชื่อที่แสดง</label>
+                    <input id="signup-name" type="text" placeholder="ชื่อของคุณ" autocomplete="name" required>
+                    <label for="signup-email">อีเมล</label>
+                    <input id="signup-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+                    <label for="signup-password">ตั้งรหัสผ่าน</label>
+                    <input id="signup-password" type="password" placeholder="อย่างน้อย 8 ตัวอักษร" autocomplete="new-password" minlength="8" required>
+                    <button class="button-primary auth-submit" type="submit">สร้างบัญชี</button>
+                </form>
+                <p class="auth-terms">มีบัญชีแล้ว? <a href="#login-page">เข้าสู่ระบบ</a></p>
+            </section>
+        </div>
+    </section>
+</section>
+
+<div class="prototype-app" id="app-preview">
+    <header class="topbar prototype-topbar">
+        <a class="brand" href="#home-page" aria-label="LearnLink หน้าฟีด"><span class="brand-mark">L</span><span>Learn<span>Link</span></span></a>
+        <nav class="top-navigation" aria-label="เมนูหลัก">
+            <a href="#home-page"><span class="material-symbols-rounded">home</span><span>หน้าฟีด</span></a>
+            <a href="#communities-page"><span class="material-symbols-rounded">groups</span><span>ชุมชน</span></a>
+            <a href="#profile-page"><span class="material-symbols-rounded">person</span><span>โปรไฟล์</span></a>
+        </nav>
+        <form class="search" action="#home-page" method="get" role="search" data-search-form><span class="material-symbols-rounded search-icon">search</span><input type="search" name="q" placeholder="Search communities, topics..." aria-label="Search communities and topics" data-search-input></form>
+        <div class="topbar-actions"><button class="icon-button notification-button" type="button" aria-label="การแจ้งเตือน"><span class="material-symbols-rounded">notifications</span><span class="notification-dot"></span></button><a class="profile-chip" href="#profile-page" aria-label="โปรไฟล์ มินตรา"><span class="avatar-small">ม</span><span class="profile-name">มินตรา</span></a></div>
+    </header>
+    <div class="app-layout prototype-layout">
+        <aside class="sidebar left-sidebar" aria-label="เมนูหลัก">
+            <div class="sidebar-section">
+                <a class="sidebar-profile-card" href="#profile-page">
+                    <span class="sidebar-cover-art"></span>
+                    <span class="avatar sidebar-profile-avatar">ม</span>
+                    <span class="sidebar-profile-name">มินตรา วัฒนกิจ</span>
+                    <span class="sidebar-profile-handle">@mintra · ผู้เรียน</span>
+                    <span class="sidebar-profile-stats"><span><strong>08</strong> โพสต์</span><span><strong>124</strong> ผู้ติดตาม</span></span>
+                </a>
+                <section class="joined-communities" aria-label="ชุมชนที่เข้าร่วม">
+                    <div class="joined-communities-heading"><p class="joined-communities-label">ชุมชนของฉัน</p><a href="#communities-page" aria-label="สำรวจชุมชน"><span class="material-symbols-rounded">add</span></a></div>
+                    <ul class="joined-community-list" data-joined-community-list></ul>
+                    <p class="joined-community-empty" data-joined-community-empty>ยังไม่มีชุมชนที่เข้าร่วม</p>
+                </section>
+            </div>
+            <div class="sidebar-note"><strong>เรียนรู้ได้ดีกว่าเมื่อแบ่งปัน 🌱</strong><p>ทุกคำถามและทุกไอเดียของคุณ อาจเป็นจุดเริ่มต้นของใครบางคน</p></div>
+            <a class="login-again" href="#login-page">ออกจากระบบ</a>
+        </aside>
+
+        <main class="main-column">
+            <section class="prototype-page feed-page" id="home-page">
+                <section class="welcome-card"><p class="eyebrow">LEARN TOGETHER · GROW TOGETHER</p><h1>สวัสดี มินตรา ✨</h1><p>วันนี้คุณกำลังเรียนรู้อะไรใหม่ ๆ อยู่หรือเปล่า?</p></section>
+                <form class="card composer" id="write-post" data-composer>
+                    <div class="composer-top"><span class="avatar">ม</span><textarea class="composer-input" rows="2" placeholder="วันนี้คุณได้เรียนรู้อะไรใหม่ ๆ บ้าง?" aria-label="เขียนสิ่งที่อยากแบ่งปัน" data-composer-input required></textarea></div>
+                    <div class="composer-bottom"><div class="composer-options">
+                        <label class="composer-option" for="post-image">▧ รูปภาพ</label><input class="file-input-hidden" id="post-image" type="file" accept="image/*" data-image-input>
+                        <details class="composer-community-picker" data-composer-community-picker>
+                            <summary class="composer-option" data-composer-community-label>◎ เลือกชุมชน</summary>
+                            <div class="composer-community-menu">
+                                <label class="visually-hidden" for="composer-community-search">ค้นหาชุมชนที่เข้าร่วม</label>
+                                <input id="composer-community-search" type="search" placeholder="ค้นหาชุมชนของฉัน..." data-composer-community-search>
+                                <ul data-composer-community-options></ul>
+                                <p data-composer-community-empty>เข้าร่วมชุมชนก่อน จึงจะเลือกโพสต์ได้</p>
+                            </div>
+                        </details>
+                    </div><button class="button-primary publish-button" type="submit">โพสต์</button></div>
+                    <div class="composer-image-preview" data-image-preview hidden><img alt="ตัวอย่างรูปที่จะแนบ"><button type="button" data-action="remove-image">ลบรูป</button></div>
+                </form>
+                <div class="section-heading"><div><h2>เรื่องราวจากชุมชน</h2><p>ไอเดียดี ๆ เริ่มต้นจากการแบ่งปัน</p></div><span class="text-link">โพสต์ล่าสุด</span></div>
+                <div class="feed-list" data-feed-list>
+                    <article class="card post-card">
+                        <header class="post-header"><span class="avatar">ม</span><div class="post-author"><strong>มินตรา วัฒนกิจ</strong><span class="post-meta">วันนี้ · 10:42 · คนรัก Python</span></div><span class="post-menu">···</span></header>
+                        <span class="post-community">#Python</span><div class="post-content">วันนี้ลองทำโปรเจกต์เล็ก ๆ ด้วย Python แล้วได้เรียนรู้เรื่องการจัดการข้อมูลเยอะมาก ใครมีเทคนิคสำหรับมือใหม่ มาแบ่งปันกันได้นะครับ 🌱</div>
+                        <div class="post-stats"><span>12 ถูกใจ</span><a href="#comment-1">3 ความคิดเห็น</a></div>
+                        <div class="post-actions">
+                            <input class="action-toggle" id="like-post-1" type="checkbox"><label class="post-action" for="like-post-1">♡ ถูกใจ</label>
+                            <a class="post-action" href="#comment-entry">▢ แสดงความคิดเห็น</a>
+                            <input class="action-toggle" id="save-post-1" type="checkbox"><label class="post-action" for="save-post-1">♧ บันทึก</label>
+                        </div>
+                        <div class="comment-thread" id="comment-1">
+                            <div class="comment-preview"><span class="avatar-small">พ</span><p><strong>พลอย</strong> ขอบคุณที่แบ่งปันนะคะ มีประโยชน์มากเลย!</p><a class="comment-menu" href="#comment-reply-1" aria-label="ตอบกลับความคิดเห็น">↩</a></div>
+                            <details class="reply-box" id="comment-reply-1"><summary>↩ ตอบกลับ พลอย</summary><div class="reply-form"><span class="avatar-small">ม</span><textarea rows="1" placeholder="เขียนคำตอบถึงพลอย..."></textarea><a class="comment-send" href="#reply-sent">ส่ง</a></div></details>
+                            <a class="reply-count" href="#comment-reply-1">ดูการตอบกลับ 2 รายการ</a>
+                        </div>
+                        <p class="prototype-notice" id="reply-sent">ตัวอย่างคำตอบพร้อมแสดงใต้ความคิดเห็น (ยังไม่ได้บันทึกข้อมูล)</p>
+                        <details class="comment-entry" id="comment-entry"><summary class="comment-compose"><span class="avatar-small">ม</span><span>เขียนความคิดเห็น...</span><span class="comment-send">➤</span></summary><div class="reply-form"><textarea rows="2" placeholder="แบ่งปันความคิดเห็นของคุณ..."></textarea><a class="button-primary" href="#comment-sent">ส่งความคิดเห็น</a></div></details>
+                        <p class="prototype-notice" id="comment-sent">เพิ่มความคิดเห็นในตัวอย่างแล้ว (ยังไม่ได้บันทึกข้อมูล)</p>
+                    </article>
+                    <article class="card post-card"><header class="post-header"><span class="avatar">พ</span><div class="post-author"><strong>พลอย ใจดี</strong><span class="post-meta">เมื่อวาน · ห้องเรียน UX/UI</span></div><span class="post-menu">···</span></header><span class="post-community">#UXDesign</span><div class="post-content">แชร์ checklist เล็ก ๆ ก่อนส่งงานออกแบบค่ะ: ลองเช็ก contrast, ขนาดตัวอักษร และดูบนมือถือเสมอ ✨</div><div class="post-stats"><span>24 ถูกใจ</span><a href="#comment-entry">5 ความคิดเห็น</a></div><div class="post-actions"><input class="action-toggle" id="like-post-2" type="checkbox"><label class="post-action" for="like-post-2">♡ ถูกใจ</label><a class="post-action" href="#comment-entry">▢ แสดงความคิดเห็น</a><input class="action-toggle" id="save-post-2" type="checkbox"><label class="post-action" for="save-post-2">♧ บันทึก</label></div></article>
+                </div>
+            </section>
+
+            <section class="prototype-page profile-page" id="profile-page">
+                <section class="card profile-cover">
+                    <div class="profile-cover-art"><label class="cover-upload" for="cover-upload">▧ เปลี่ยนภาพปก</label></div>
+                    <div class="profile-identity"><span class="avatar profile-large">ม</span><div><h1>มินตรา วัฒนกิจ</h1><p>@mintra · สมาชิกตั้งแต่ ต.ค. 2568</p></div><a class="button-secondary profile-edit" href="#profile-edit">แก้ไขโปรไฟล์</a><a class="button-secondary profile-logout" href="#login-page">ออกจากระบบ</a></div>
+                    <p class="profile-bio">กำลังเรียนรู้ Python, Data และการออกแบบผลิตภัณฑ์ 🌱<br>เชื่อว่าการแบ่งปันทำให้เราเติบโตไปได้ไกลกว่าเดิม</p>
+                    <div class="profile-stats"><span><strong>08</strong> โพสต์</span><span><strong>124</strong> ผู้ติดตาม</span><span><strong>86</strong> กำลังติดตาม</span></div>
+                </section>
+                <input class="file-input-hidden" id="cover-upload" type="file" accept="image/*" aria-label="เลือกรูปภาพปก">
+                <div class="section-heading"><div><h2>โพสต์ของมินตรา</h2><p>สิ่งที่ฉันกำลังเรียนรู้และแบ่งปัน</p></div></div>
+                <div class="feed-list">
+                    <article class="card post-card">
+                        <header class="post-header"><span class="avatar">ม</span><div class="post-author"><strong>มินตรา วัฒนกิจ</strong><span class="post-meta">วันนี้ · 10:42 · แตะข้อความเพื่อแก้ไข</span></div><div class="post-owner-actions"><a class="post-menu" href="#editable-post-content" aria-label="แก้ไขโพสต์">✎</a><label class="post-menu delete-label" for="delete-post" aria-label="ลบโพสต์">×</label></div></header>
+                        <span class="post-community">#Python</span><div class="post-content editable-post" id="editable-post-content" contenteditable="true" role="textbox" aria-label="แก้ไขข้อความโพสต์">วันนี้ลองทำโปรเจกต์เล็ก ๆ ด้วย Python แล้วได้เรียนรู้เรื่องการจัดการข้อมูลเยอะมาก 🌱</div>
+                        <div class="post-edit-save"><span>ข้อความที่แก้ไขจะแสดงในตัวอย่างนี้</span><a class="button-primary" href="#profile-page">บันทึกการแก้ไข</a></div>
+                        <div class="post-stats"><span>12 ถูกใจ</span><a href="#comment-1">3 ความคิดเห็น</a></div>
+                        <div class="post-actions"><a class="post-action" href="#profile-page">♡ ถูกใจ</a><a class="post-action" href="#comment-1">▢ แสดงความคิดเห็น</a><a class="post-action" href="#profile-page">♧ บันทึก</a></div>
+                    </article>
+                    <input class="delete-toggle" id="delete-post" type="checkbox">
+                    <div class="post-deleted-state card"><strong>ซ่อนโพสต์แล้ว</strong><label class="button-secondary" for="delete-post">เลิกทำ</label></div>
+                </div>
+                <section class="card edit-preview" id="profile-edit">
+                    <h2>แก้ไขโปรไฟล์</h2>
+                    <div class="profile-image-edit"><span class="avatar profile-large">ม</span><label class="button-secondary file-picker" for="avatar-upload">เลือกรูปโปรไฟล์</label><input class="file-input-hidden" id="avatar-upload" type="file" accept="image/*"></div>
+                    <label>ชื่อที่แสดง<input type="text" value="มินตรา วัฒนกิจ"></label>
+                    <label>แนะนำตัว<textarea rows="3">กำลังเรียนรู้ Python, Data และการออกแบบผลิตภัณฑ์</textarea></label>
+                    <a class="button-primary" href="#profile-page">บันทึกโปรไฟล์</a>
+                </section>
+            </section>
+
+            <section class="prototype-page communities-page" id="communities-page">
+                <section class="welcome-card community-welcome"><p class="eyebrow">FIND YOUR PEOPLE</p><h1>ชุมชนที่ใช่ เริ่มจากความสนใจเดียวกัน</h1><p>เรียนรู้ แลกเปลี่ยน และเติบโตไปพร้อมกับเพื่อนร่วมทาง</p></section>
+                <div class="community-page-heading"><div><h2>สำรวจชุมชน</h2><p>เลือกพื้นที่ที่อยากเริ่มต้นเรียนรู้</p></div><div class="community-page-actions"><details class="access-code community-join-code"><summary class="button-secondary">เข้าร่วมด้วยรหัส</summary><form data-community-join-form><label for="community-join-code">รหัสเชิญของชุมชน</label><input id="community-join-code" type="text" placeholder="กรอกรหัสเชิญ" required><button class="button-primary" type="submit">ยืนยันรหัสและเข้าชุมชน</button><small>กรอกรหัสที่เจ้าของชุมชนแชร์ให้</small><p class="community-form-message" data-join-message role="status" hidden></p></form></details><a class="button-primary" href="#community-create">＋ สร้างชุมชน</a></div></div>
+                <div class="community-grid">
+                    <article class="card community-card" data-community-card data-community-id="python" data-community-name="คนรัก Python"><span class="community-mark">Py</span><h3>คนรัก Python</h3><p>ฝึกเขียนโค้ด ถามตอบ และทำโปรเจกต์ไปด้วยกัน</p><span class="community-count">240 สมาชิก · 18 โพสต์ใหม่</span><a class="button-secondary" href="#python-community">ดูชุมชน</a></article>
+                    <article class="card community-card" data-community-card data-community-id="ux" data-community-name="ห้องเรียน UX/UI"><span class="community-mark mint-mark">UX</span><h3>ห้องเรียน UX/UI</h3><p>แบ่งปันไอเดียและพัฒนาประสบการณ์ผู้ใช้</p><span class="community-count">128 สมาชิก · 9 โพสต์ใหม่</span><a class="button-secondary" href="#ux-community">ดูชุมชน</a></article>
+                    <article class="card community-card" data-community-card data-community-id="english" data-community-public="false" data-community-name="ฝึกภาษาอังกฤษ"><span class="community-mark peach-mark">En</span><h3>ฝึกภาษาอังกฤษ</h3><p>ฝึกพูด ฝึกเขียน เรียนรู้แบบไม่กลัวผิด</p><span class="community-count">96 สมาชิก · 12 โพสต์ใหม่</span><a class="button-secondary" href="#english-community">ดูชุมชน</a></article>
+                </div>
+                <p class="community-empty-state" data-community-empty hidden>ไม่พบชุมชนจากคำค้นหา</p>
+                <section class="card community-detail-preview" id="python-community" data-community-detail data-community-id="python" data-community-visibility="public" data-community-name="คนรัก Python">
+                    <a class="button-secondary community-back-link" href="#communities-page">← กลับไปชุมชนทั้งหมด</a>
+                    <div class="community-detail-top"><span class="community-mark">Py</span><div><span class="eyebrow">COMMUNITY · สาธารณะ</span><h2>คนรัก Python</h2><p>พื้นที่สำหรับคนอยากเริ่มเขียนโค้ดและคนที่อยากแบ่งปัน</p></div><button class="button-primary" type="button" data-community-join="คนรัก Python">เข้าร่วมชุมชน</button></div>
+                    <p class="community-invite-code">รหัสเข้าร่วม: <code data-community-code="คนรัก Python"></code></p>
+                    <section class="community-member-area" data-community-members-only hidden><h3>แบ่งปันในชุมชนนี้</h3><form class="community-post-form" data-community-post-form><label for="python-post-content">เขียนโพสต์</label><textarea id="python-post-content" name="content" rows="3" placeholder="แบ่งปันสิ่งที่กำลังเรียนรู้กับชุมชนนี้..." required></textarea><div class="community-post-controls"><label class="button-secondary community-image-picker" for="python-post-image">▧ เพิ่มรูป</label><input class="file-input-hidden" id="python-post-image" type="file" accept="image/*" data-community-post-image><button class="button-primary" type="submit">โพสต์ในชุมชน</button></div><img class="community-post-image-preview" data-community-post-preview alt="ตัวอย่างรูปโพสต์" hidden><p class="community-form-message" data-post-message role="status" hidden></p></form></section>
+                    <section class="community-post-wall" data-community-post-wall><h3>โพสต์ทั้งหมด</h3><p class="community-post-empty" data-community-post-empty hidden>ยังไม่มีโพสต์ในชุมชนนี้</p><div class="community-post-list" data-community-posts></div></section>
+                </section>
+                <section class="card community-detail-preview" id="ux-community" data-community-detail data-community-id="ux" data-community-visibility="public" data-community-name="ห้องเรียน UX/UI">
+                    <a class="button-secondary community-back-link" href="#communities-page">← กลับไปชุมชนทั้งหมด</a>
+                    <div class="community-detail-top"><span class="community-mark mint-mark">UX</span><div><span class="eyebrow">COMMUNITY · สาธารณะ</span><h2>ห้องเรียน UX/UI</h2><p>แบ่งปันไอเดียและพัฒนาประสบการณ์ผู้ใช้ไปด้วยกัน</p></div><button class="button-primary" type="button" data-community-join="ห้องเรียน UX/UI">เข้าร่วมชุมชน</button></div>
+                    <p class="community-invite-code">รหัสเข้าร่วม: <code data-community-code="ห้องเรียน UX/UI"></code></p>
+                    <section class="community-member-area" data-community-members-only hidden><h3>แบ่งปันในชุมชนนี้</h3><form class="community-post-form" data-community-post-form><label for="ux-post-content">เขียนโพสต์</label><textarea id="ux-post-content" name="content" rows="3" placeholder="แบ่งปันสิ่งที่กำลังเรียนรู้กับชุมชนนี้..." required></textarea><div class="community-post-controls"><label class="button-secondary community-image-picker" for="ux-post-image">▧ เพิ่มรูป</label><input class="file-input-hidden" id="ux-post-image" type="file" accept="image/*" data-community-post-image><button class="button-primary" type="submit">โพสต์ในชุมชน</button></div><img class="community-post-image-preview" data-community-post-preview alt="ตัวอย่างรูปโพสต์" hidden><p class="community-form-message" data-post-message role="status" hidden></p></form></section>
+                    <section class="community-post-wall" data-community-post-wall><h3>โพสต์ทั้งหมด</h3><p class="community-post-empty" data-community-post-empty hidden>ยังไม่มีโพสต์ในชุมชนนี้</p><div class="community-post-list" data-community-posts></div></section>
+                </section>
+                <section class="card community-detail-preview" id="english-community" data-community-detail data-community-id="english" data-community-visibility="private" data-community-name="ฝึกภาษาอังกฤษ">
+                    <a class="button-secondary community-back-link" href="#communities-page">← กลับไปชุมชนทั้งหมด</a>
+                    <div class="community-detail-top"><span class="community-mark peach-mark">En</span><div><span class="eyebrow">COMMUNITY · ส่วนตัว</span><h2>ฝึกภาษาอังกฤษ</h2><p>พื้นที่ปลอดภัยสำหรับฝึกพูด ฝึกเขียน และช่วยกันเรียนรู้</p></div></div>
+                    <details class="access-code"><summary class="button-primary">ใส่รหัสเพื่อขอเข้าร่วม</summary><form action="#english-feed" method="get"><label for="join-code">รหัสเชิญของชุมชน</label><input id="join-code" type="password" placeholder="กรอกรหัสเชิญ" required><button class="button-primary" type="submit">ยืนยันรหัสและเข้าชุมชน</button><small>ตัวอย่างหน้าจอ: ระบบยังไม่ได้ตรวจสอบรหัสจริง</small></form></details>
+                    <span class="community-count">96 สมาชิก · ต้องได้รับคำเชิญเพื่อเข้าร่วม</span>
+                    <section class="community-member-area" data-community-members-only hidden><h3>แบ่งปันในชุมชนนี้</h3><form class="community-post-form" data-community-post-form><label for="english-post-content">เขียนโพสต์</label><textarea id="english-post-content" name="content" rows="3" placeholder="แบ่งปันสิ่งที่กำลังเรียนรู้กับชุมชนนี้..." required></textarea><div class="community-post-controls"><label class="button-secondary community-image-picker" for="english-post-image">▧ เพิ่มรูป</label><input class="file-input-hidden" id="english-post-image" type="file" accept="image/*" data-community-post-image><button class="button-primary" type="submit">โพสต์ในชุมชน</button></div><img class="community-post-image-preview" data-community-post-preview alt="ตัวอย่างรูปโพสต์" hidden><p class="community-form-message" data-post-message role="status" hidden></p></form></section>
+                    <section class="community-post-wall" data-community-post-wall><h3>โพสต์ทั้งหมด</h3><p class="community-post-empty" data-community-post-empty hidden>ยังไม่มีโพสต์ในชุมชนนี้</p><div class="community-post-list" data-community-posts></div></section>
+                </section>
+                <form class="card edit-preview community-create-panel" id="community-create" data-community-create><h2>สร้างชุมชนใหม่</h2><label for="new-community-name">ชื่อชุมชน</label><input id="new-community-name" name="name" type="text" placeholder="เช่น คนชอบ Data" required><label for="new-community-description">เกี่ยวกับชุมชน</label><textarea id="new-community-description" name="description" rows="3" placeholder="ชุมชนนี้พูดคุยหรือเรียนรู้เรื่องอะไร?"></textarea><div class="community-image-control"><label class="button-secondary community-image-picker" for="new-community-image">▧ เพิ่มรูปชุมชน</label><input class="file-input-hidden" id="new-community-image" type="file" accept="image/*" data-community-image-input><img class="community-image-preview" data-community-image-preview alt="ตัวอย่างรูปชุมชน" hidden></div><fieldset class="visibility-options"><legend>การมองเห็นชุมชน</legend><label class="visibility-choice"><input type="radio" name="community-visibility" value="public" checked><span><strong>สาธารณะ</strong><small>ทุกคนค้นหาและเข้าร่วมได้ พร้อมรหัสสุ่มสำหรับแชร์</small></span></label><label class="visibility-choice"><input type="radio" name="community-visibility" value="private"><span><strong>ส่วนตัว</strong><small>ต้องใช้รหัสเชิญเพื่อเข้าร่วม</small></span></label></fieldset><div class="public-code-field"><label for="generated-community-code">รหัสสุ่มสำหรับเข้าร่วม</label><div class="generated-code-row"><input id="generated-community-code" type="text" data-generated-community-code readonly><button class="button-secondary" type="button" data-regenerate-community-code>สุ่มรหัสใหม่</button></div><small>แชร์รหัสนี้ให้ผู้เรียนเข้าร่วมได้ แม้ค้นหาชุมชนไม่เจอ</small></div><div class="private-code-field"><label for="new-community-code">ตั้งรหัสเชิญ</label><input id="new-community-code" name="private-code" type="text" placeholder="กำหนดรหัสสำหรับสมาชิก"></div><button class="button-primary" type="submit">สร้างชุมชน</button><p class="community-form-message" data-create-message role="status" hidden></p></form>
+            </section>
+        </main>
+        <aside class="sidebar right-sidebar prototype-right-sidebar">
+            <section class="card side-card"><h2>หัวข้อกำลังมาแรง</h2><div class="topic-list"><a class="topic-item" href="#home-page"><span class="topic-name">#Python</span><span class="topic-count">128 โพสต์</span></a><a class="topic-item" href="#home-page"><span class="topic-name">#Django</span><span class="topic-count">86 โพสต์</span></a><a class="topic-item" href="#home-page"><span class="topic-name">#ออกแบบ UX</span><span class="topic-count">54 โพสต์</span></a></div></section>
+            <section class="card side-card"><h2>ชุมชนแนะนำ</h2><div class="community-list"><a class="community-item" href="#communities-page"><span class="community-mark">Py</span><span class="community-info"><strong>คนรัก Python</strong><span class="community-count">240 สมาชิก</span></span></a><a class="community-item" href="#communities-page"><span class="community-mark mint-mark">UX</span><span class="community-info"><strong>ห้องเรียน UX/UI</strong><span class="community-count">128 สมาชิก</span></span></a></div></section>
+            <section class="card side-card"><div class="side-heading"><h2>กิจกรรมใกล้ถึง</h2><a href="#profile-page">ดูทั้งหมด</a></div><a class="upcoming-event" href="#profile-page"><span class="event-date"><strong>22</strong><small>ต.ค.</small></span><span><strong>Study with Python</strong><small>พฤหัสบดี · 19:00 น.</small></span></a><a class="upcoming-event" href="#profile-page"><span class="event-date event-date-mint"><strong>25</strong><small>ต.ค.</small></span><span><strong>UX Portfolio Review</strong><small>อาทิตย์ · 14:00 น.</small></span></a></section>
+            <section class="card side-card"><div class="side-heading"><h2>ผู้เรียนที่น่าติดตาม</h2><a href="#profile-page">ดูทั้งหมด</a></div><div class="suggested-learner"><span class="avatar-small learner-avatar">พ</span><span><strong>พลอย ใจดี</strong><small>UX Designer · 8 ชุมชนร่วม</small></span><a href="#profile-page" aria-label="ดูโปรไฟล์พลอย">＋</a></div><div class="suggested-learner"><span class="avatar-small learner-avatar learner-avatar-mint">น</span><span><strong>นนท์ พัฒนกิจ</strong><small>Python · Data Science</small></span><a href="#profile-page" aria-label="ดูโปรไฟล์นนท์">＋</a></div></section>
+            <section class="card side-card learning-tip"><span class="material-symbols-rounded">auto_awesome</span><h2>เรียนรู้วันละนิด</h2><p>การแบ่งปันสิ่งที่เรียนรู้ ช่วยให้เราเข้าใจได้ลึกขึ้น</p></section>
+        </aside>
+    </div>
+</div>
+<script src="{% static 'js/app.js' %}" defer></script>
+{% endblock %}
