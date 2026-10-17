@@ -1,8 +1,9 @@
 from django.db import models
+from common.abstracts import TimestampedModel
 from users.models import User
 
 
-class Community(models.Model):
+class Community(TimestampedModel):
     name = models.CharField(max_length=100)
     description = models.TextField()
     invite_code = models.CharField(max_length=8, unique=True)
@@ -12,8 +13,6 @@ class Community(models.Model):
         User,
         on_delete=models.CASCADE
     )
-
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
