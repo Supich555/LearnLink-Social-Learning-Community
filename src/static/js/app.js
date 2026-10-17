@@ -1,4 +1,133 @@
 (() => {
+    const videoStore = (() => {
+        const databaseName = "learnlink-media";
+        const storeName = "videos";
+        let databasePromise;
+
+        const openDatabase = () => {
+            if (!("indexedDB" in window)) {
+                return Promise.reject(new Error("เบราว์เซอร์นี้ไม่รองรับการจัดเก็บวิดีโอ"));
+            }
+            if (!databasePromise) {
+                databasePromise = new Promise((resolve, reject) => {
+                    const request = window.indexedDB.open(databaseName, 1);
+                    request.addEventListener("upgradeneeded", () => {
+                        const database = request.result;
+                        if (!database.objectStoreNames.contains(storeName)) {
+                            database.createObjectStore(storeName, { keyPath: "id" });
+                        }
+                    });
+                    request.addEventListener("success", () => resolve(request.result), { once: true });
+                    request.addEventListener("error", () => reject(request.error || new Error("เปิดที่เก็บวิดีโอไม่สำเร็จ")), { once: true });
+                    request.addEventListener("blocked", () => reject(new Error("ที่เก็บวิดีโอถูกใช้งานจากแท็บอื่น")), { once: true });
+                });
+            }
+            return databasePromise;
+        };
+
+        const inspect = (file) => new Promise((resolve, reject) => {
+            if (!file.type.startsWith("video/")) {
+                reject(new Error("กรุณาเลือกไฟล์วิดีโอ"));
+                return;
+            }
+            if (file.size > 100 * 1024 * 1024) {
+                reject(new Error("วิดีโอต้องมีขนาดไม่เกิน 100 MB"));
+                return;
+            }
+            const source = URL.createObjectURL(file);
+            const probe = document.createElement("video");
+            probe.preload = "metadata";
+            probe.addEventListener("loadedmetadata", () => {
+                const duration = probe.duration;
+                URL.revokeObjectURL(source);
+                probe.removeAttribute("src");
+                if (!Number.isFinite(duration) || duration <= 0) {
+                    reject(new Error("อ่านความยาววิดีโอไม่สำเร็จ"));
+                } else if (duration > 180) {
+                    reject(new Error("วิดีโอต้องมีความยาวไม่เกิน 3 นาที"));
+                } else {
+                    resolve({ duration });
+                }
+            }, { once: true });
+            probe.addEventListener("error", () => {
+                URL.revokeObjectURL(source);
+                probe.removeAttribute("src");
+                reject(new Error("เปิดไฟล์วิดีโอเพื่อตรวจสอบไม่สำเร็จ"));
+            }, { once: true });
+            probe.src = source;
+        });
+
+        const put = async (id, file) => {
+            const database = await openDatabase();
+            await new Promise((resolve, reject) => {
+                const transaction = database.transaction(storeName, "readwrite");
+                transaction.objectStore(storeName).put({ id, blob: file, type: file.type, name: file.name });
+                transaction.addEventListener("complete", resolve, { once: true });
+                transaction.addEventListener("error", () => reject(transaction.error || new Error("บันทึกวิดีโอไม่สำเร็จ")), { once: true });
+                transaction.addEventListener("abort", () => reject(transaction.error || new Error("บันทึกวิดีโอไม่สำเร็จ")), { once: true });
+            });
+        };
+
+        const get = async (id) => {
+            const database = await openDatabase();
+            return new Promise((resolve, reject) => {
+                const request = database.transaction(storeName, "readonly").objectStore(storeName).get(id);
+                request.addEventListener("success", () => resolve(request.result || null), { once: true });
+                request.addEventListener("error", () => reject(request.error || new Error("อ่านวิดีโอไม่สำเร็จ")), { once: true });
+            });
+        };
+
+        const remove = async (id) => {
+            const database = await openDatabase();
+            await new Promise((resolve, reject) => {
+                const transaction = database.transaction(storeName, "readwrite");
+                transaction.objectStore(storeName).delete(id);
+                transaction.addEventListener("complete", resolve, { once: true });
+                transaction.addEventListener("error", () => reject(transaction.error || new Error("ลบวิดีโอไม่สำเร็จ")), { once: true });
+                transaction.addEventListener("abort", () => reject(transaction.error || new Error("ลบวิดีโอไม่สำเร็จ")), { once: true });
+            });
+        };
+
+        const attach = async (element, id) => {
+            try {
+                const record = await get(id);
+                if (!record?.blob || !element.isConnected) return;
+                const source = URL.createObjectURL(record.blob);
+                element.dataset.objectUrl = source;
+                element.src = source;
+                element.load();
+            } catch (error) {
+                console.error("Could not load LearnLink video.", error);
+            }
+        };
+
+        const release = (root) => {
+            root.querySelectorAll("video[data-object-url]").forEach((element) => {
+                URL.revokeObjectURL(element.dataset.objectUrl);
+                delete element.dataset.objectUrl;
+            });
+        };
+
+        const revokePreview = (element) => {
+            if (!element?.dataset.objectUrl) return;
+            URL.revokeObjectURL(element.dataset.objectUrl);
+            delete element.dataset.objectUrl;
+            element.removeAttribute("src");
+            element.load();
+        };
+
+        const preview = (element, file) => {
+            revokePreview(element);
+            const source = URL.createObjectURL(file);
+            element.dataset.objectUrl = source;
+            element.src = source;
+            element.hidden = false;
+        };
+
+        return { attach, inspect, preview, put, release, remove, revokePreview };
+    })();
+    window.LearnLinkVideoStore = videoStore;
+
     const storageKeys = {
         posts: "learnlink.posts.v1",
         likes: "learnlink.likes.v1",
@@ -155,6 +284,15 @@
             image.alt = "ภาพประกอบโพสต์";
             image.loading = "lazy";
             card.append(image);
+        }
+        if (post.videoId) {
+            const video = createElement("video", "post-video");
+            video.controls = true;
+            video.preload = "metadata";
+            video.playsInline = true;
+            video.setAttribute("aria-label", "วิดีโอประกอบโพสต์");
+            card.append(video);
+            videoStore.attach(video, post.videoId);
         }
 
         const stats = createElement("div", "post-stats");
@@ -381,25 +519,49 @@
         filterPosts();
     });
 
-    document.querySelector("[data-composer]")?.addEventListener("submit", (event) => {
+    const selectedFeedVideos = new WeakMap();
+    document.querySelector("[data-composer]")?.addEventListener("submit", async (event) => {
         event.preventDefault();
         const form = event.currentTarget;
         const input = form.querySelector("[data-composer-input]");
         const content = input.value.trim();
+        const selectedVideo = selectedFeedVideos.get(form);
+        const videoInput = form.querySelector("[data-video-input]");
+        if (videoInput?.files?.length && !selectedVideo) {
+            showToast("รอตรวจสอบไฟล์วิดีโอสักครู่แล้วลองโพสต์อีกครั้ง");
+            return;
+        }
         if (!content) {
             input.setCustomValidity("เขียนสิ่งที่อยากแบ่งปันก่อนโพสต์");
             input.reportValidity();
             input.addEventListener("input", () => input.setCustomValidity(""), { once: true });
             return;
         }
+        const postId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const videoId = selectedVideo ? `post-${postId}` : "";
+        const submitButton = form.querySelector("[type=submit]");
+        if (submitButton) submitButton.disabled = true;
+        if (selectedVideo) {
+            try {
+                await videoStore.put(videoId, selectedVideo);
+            } catch (error) {
+                console.error("Could not store selected post video.", error);
+                showToast(error instanceof DOMException && error.name === "QuotaExceededError"
+                    ? "พื้นที่จัดเก็บวิดีโอในเบราว์เซอร์ไม่เพียงพอ"
+                    : "บันทึกวิดีโอไม่สำเร็จ กรุณาลองใหม่");
+                if (submitButton) submitButton.disabled = false;
+                return;
+            }
+        }
         const post = {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            id: postId,
             author: currentUserName,
             content,
             kind: form.dataset.communityName || form.dataset.postKind || "",
             communityId: form.dataset.communityId || "",
             communityName: form.dataset.communityName || "",
             image: form.dataset.image || "",
+            ...(videoId ? { videoId } : {}),
             createdAt: new Date().toISOString(),
         };
         const card = createPostCard(post);
@@ -407,8 +569,17 @@
         const emptyState = feedList?.querySelector("[data-empty-state]");
         if (emptyState) emptyState.hidden = true;
         const saved = persistPost(post);
+        if (!saved) {
+            card.remove();
+            if (videoId) {
+                videoStore.remove(videoId).catch((error) => console.error("Could not remove an unreferenced post video.", error));
+            }
+            if (submitButton) submitButton.disabled = false;
+            return;
+        }
         input.value = "";
         delete form.dataset.image;
+        selectedFeedVideos.delete(form);
         delete form.dataset.postKind;
         delete form.dataset.communityId;
         delete form.dataset.communityName;
@@ -423,6 +594,13 @@
         if (preview) preview.hidden = true;
         const fileInput = form.querySelector("[data-image-input]");
         if (fileInput) fileInput.value = "";
+        if (videoInput) videoInput.value = "";
+        const videoPreview = form.querySelector("[data-video-preview]");
+        if (videoPreview) {
+            videoStore.revokePreview(videoPreview);
+            videoPreview.hidden = true;
+        }
+        if (submitButton) submitButton.disabled = false;
         updatePostControls(card);
         savedOnly = false;
         document.querySelectorAll("[data-feed-filter]").forEach((link) => {
@@ -455,6 +633,14 @@
         reader.addEventListener("load", () => {
             const form = document.querySelector("[data-composer]");
             if (!form || typeof reader.result !== "string") return;
+            selectedFeedVideos.delete(form);
+            const videoInput = form.querySelector("[data-video-input]");
+            if (videoInput) videoInput.value = "";
+            const videoPreview = form.querySelector("[data-video-preview]");
+            if (videoPreview) {
+                videoStore.revokePreview(videoPreview);
+                videoPreview.hidden = true;
+            }
             form.dataset.image = reader.result;
             const preview = form.querySelector("[data-image-preview]");
             preview.querySelector("img").src = reader.result;
@@ -462,6 +648,33 @@
         });
         reader.addEventListener("error", () => showToast("อ่านรูปภาพไม่สำเร็จ กรุณาลองใหม่"));
         reader.readAsDataURL(file);
+    });
+
+    document.querySelector("[data-video-input]")?.addEventListener("change", async (event) => {
+        const videoInput = event.currentTarget;
+        const form = videoInput.closest("[data-composer]");
+        const file = videoInput.files?.[0];
+        if (!form || !file) return;
+        const preview = form.querySelector("[data-video-preview]");
+        selectedFeedVideos.delete(form);
+        try {
+            await videoStore.inspect(file);
+        } catch (error) {
+            if (videoInput.files?.[0] !== file) return;
+            videoInput.value = "";
+            videoStore.revokePreview(preview);
+            if (preview) preview.hidden = true;
+            showToast(error.message);
+            return;
+        }
+        if (videoInput.files?.[0] !== file) return;
+        selectedFeedVideos.set(form, file);
+        delete form.dataset.image;
+        const imageInput = form.querySelector("[data-image-input]");
+        if (imageInput) imageInput.value = "";
+        const imagePreview = form.querySelector("[data-image-preview]");
+        if (imagePreview) imagePreview.hidden = true;
+        videoStore.preview(preview, file);
     });
 
     document.addEventListener("click", async (event) => {
@@ -528,7 +741,11 @@
             window.dispatchEvent(new CustomEvent("learnlink:community-post-deleted", {
                 detail: { postId, communityId: post.communityId },
             }));
+            videoStore.release(card);
             showToast("ลบโพสต์แล้ว");
+            if (post.videoId) {
+                videoStore.remove(post.videoId).catch((error) => console.error("Could not remove a deleted post video.", error));
+            }
             return;
         }
 
@@ -689,6 +906,8 @@
     const communityGrid = document.querySelector(".community-grid");
     const communityPage = document.querySelector(".communities-page");
     if (!communityPage || !communityGrid) return;
+    const videoStore = window.LearnLinkVideoStore;
+    const selectedCommunityVideos = new WeakMap();
 
     const readStorage = (key, fallback) => {
         try {
@@ -1062,6 +1281,16 @@
             image.loading = "lazy";
             article.append(image);
         }
+        if (post.videoId) {
+            const video = document.createElement("video");
+            video.className = "community-post-video";
+            video.controls = true;
+            video.preload = "metadata";
+            video.playsInline = true;
+            video.setAttribute("aria-label", "วิดีโอประกอบโพสต์");
+            article.append(video);
+            videoStore.attach(video, post.videoId);
+        }
         if (!post.id) return article;
         const commentArea = document.createElement("section");
         commentArea.className = "community-comment-area";
@@ -1131,6 +1360,7 @@
             && typeof post.createdAt === "string"
             && !Number.isNaN(Date.parse(post.createdAt)));
         document.querySelectorAll("[data-community-posts]").forEach((list) => {
+            videoStore.release(list);
             const detail = list.closest("[data-community-detail]");
             const communityId = detail?.dataset.communityId;
             const community = {
@@ -1211,22 +1441,44 @@
         imageInput.type = "file";
         imageInput.accept = "image/*";
         imageInput.dataset.communityPostImage = "";
+        const videoId = `${inputId}-video`;
+        const videoLabel = document.createElement("label");
+        videoLabel.className = "button-secondary community-image-picker";
+        videoLabel.htmlFor = videoId;
+        videoLabel.textContent = "▶ วิดีโอสั้น";
+        const videoInput = document.createElement("input");
+        videoInput.className = "file-input-hidden";
+        videoInput.id = videoId;
+        videoInput.type = "file";
+        videoInput.accept = "video/*";
+        videoInput.dataset.communityPostVideo = "";
         const submit = document.createElement("button");
         submit.className = "button-primary";
         submit.type = "submit";
         submit.textContent = "โพสต์ในชุมชน";
-        controls.append(imageLabel, imageInput, submit);
+        controls.append(imageLabel, imageInput, videoLabel, videoInput, submit);
         const preview = document.createElement("img");
         preview.className = "community-post-image-preview";
         preview.dataset.communityPostPreview = "";
         preview.alt = "ตัวอย่างรูปโพสต์";
         preview.hidden = true;
+        const videoPreview = document.createElement("video");
+        videoPreview.className = "community-post-video-preview";
+        videoPreview.dataset.communityVideoPreview = "";
+        videoPreview.controls = true;
+        videoPreview.playsInline = true;
+        videoPreview.preload = "metadata";
+        videoPreview.setAttribute("aria-label", "ตัวอย่างวิดีโอที่จะแนบ");
+        videoPreview.hidden = true;
+        const uploadHelp = document.createElement("small");
+        uploadHelp.className = "media-upload-help";
+        uploadHelp.textContent = "วิดีโอไม่เกิน 3 นาที และ 100 MB";
         const message = document.createElement("p");
         message.className = "community-form-message";
         message.dataset.postMessage = "";
         message.setAttribute("role", "status");
         message.hidden = true;
-        form.append(label, textarea, controls, preview, message);
+        form.append(label, textarea, controls, preview, videoPreview, uploadHelp, message);
         section.append(heading, form);
         return section;
     };
@@ -1547,7 +1799,33 @@
 
     document.addEventListener("change", (event) => {
         const input = event.target instanceof HTMLInputElement ? event.target : null;
-        if (!input || (!input.matches("[data-community-image-input]") && !input.matches("[data-community-post-image]"))) return;
+        if (!input) return;
+        if (input.matches("[data-community-post-video]")) {
+            const form = input.closest("form");
+            const file = input.files?.[0];
+            if (!form || !file) return;
+            selectedCommunityVideos.delete(form);
+            videoStore.inspect(file).then(() => {
+                if (input.files?.[0] !== file) return;
+                selectedCommunityVideos.set(form, file);
+                delete form.dataset.postImage;
+                const imageInput = form.querySelector("[data-community-post-image]");
+                if (imageInput) imageInput.value = "";
+                const imagePreview = form.querySelector("[data-community-post-preview]");
+                if (imagePreview) imagePreview.hidden = true;
+                const videoPreview = form.querySelector("[data-community-video-preview]");
+                if (videoPreview) videoStore.preview(videoPreview, file);
+            }).catch((error) => {
+                if (input.files?.[0] !== file) return;
+                input.value = "";
+                const preview = form.querySelector("[data-community-video-preview]");
+                videoStore.revokePreview(preview);
+                if (preview) preview.hidden = true;
+                showMessage(form.querySelector("[data-post-message]"), error.message, true);
+            });
+            return;
+        }
+        if (!input.matches("[data-community-image-input]") && !input.matches("[data-community-post-image]")) return;
 
         const file = input.files?.[0];
         if (!file) return;
@@ -1567,6 +1845,14 @@
             const form = input.closest("form");
             if (!form) return;
             if (input.matches("[data-community-post-image]")) {
+                selectedCommunityVideos.delete(form);
+                const videoInput = form.querySelector("[data-community-post-video]");
+                if (videoInput) videoInput.value = "";
+                const videoPreview = form.querySelector("[data-community-video-preview]");
+                if (videoPreview) {
+                    videoStore.revokePreview(videoPreview);
+                    videoPreview.hidden = true;
+                }
                 form.dataset.postImage = reader.result;
                 const preview = form.querySelector("[data-community-post-preview]");
                 if (preview) {
@@ -1660,7 +1946,7 @@
         if (privateCodeField) privateCodeField.required = false;
     });
 
-    document.addEventListener("submit", (event) => {
+    document.addEventListener("submit", async (event) => {
         const form = event.target instanceof HTMLFormElement ? event.target : null;
         if (!form) return;
 
@@ -1774,26 +2060,61 @@
                 showMessage(form.querySelector("[data-post-message]"), "กรุณาเขียนข้อความก่อนโพสต์", true);
                 return;
             }
+            const selectedVideo = selectedCommunityVideos.get(form);
+            const videoInput = form.querySelector("[data-community-post-video]");
+            if (videoInput?.files?.length && !selectedVideo) {
+                showMessage(form.querySelector("[data-post-message]"), "รอตรวจสอบไฟล์วิดีโอสักครู่แล้วลองโพสต์อีกครั้ง", true);
+                return;
+            }
             const posts = readArray(communityPostsStorageKey);
+            const postId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const videoId = selectedVideo ? `community-post-${postId}` : "";
+            const submitButton = form.querySelector("[type=submit]");
+            if (submitButton) submitButton.disabled = true;
+            if (selectedVideo) {
+                try {
+                    await videoStore.put(videoId, selectedVideo);
+                } catch (error) {
+                    console.error("Could not store selected community video.", error);
+                    showMessage(form.querySelector("[data-post-message]"), error instanceof DOMException && error.name === "QuotaExceededError"
+                        ? "พื้นที่จัดเก็บวิดีโอในเบราว์เซอร์ไม่เพียงพอ"
+                        : "บันทึกวิดีโอไม่สำเร็จ กรุณาลองใหม่", true);
+                    if (submitButton) submitButton.disabled = false;
+                    return;
+                }
+            }
             const post = {
-                id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                id: postId,
                 communityId,
                 communityName,
                 author: currentUserName,
                 content,
                 image: form.dataset.postImage || "",
+                ...(videoId ? { videoId } : {}),
                 createdAt: new Date().toISOString(),
             };
             if (!writeStorage(communityPostsStorageKey, [post, ...posts])) {
+                if (videoId) {
+                    videoStore.remove(videoId).catch((error) => console.error("Could not remove an unreferenced community video.", error));
+                }
+                if (submitButton) submitButton.disabled = false;
                 showMessage(form.querySelector("[data-post-message]"), "บันทึกโพสต์ไม่สำเร็จ กรุณาลองใหม่", true);
                 return;
             }
             contentInput.value = "";
             delete form.dataset.postImage;
+            selectedCommunityVideos.delete(form);
             const imageInput = form.querySelector("[data-community-post-image]");
             if (imageInput) imageInput.value = "";
+            if (videoInput) videoInput.value = "";
             const preview = form.querySelector("[data-community-post-preview]");
             if (preview) preview.hidden = true;
+            const videoPreview = form.querySelector("[data-community-video-preview]");
+            if (videoPreview) {
+                videoStore.revokePreview(videoPreview);
+                videoPreview.hidden = true;
+            }
+            if (submitButton) submitButton.disabled = false;
             showMessage(form.querySelector("[data-post-message]"), "โพสต์ในชุมชนแล้ว");
             renderCommunityPosts();
             return;
