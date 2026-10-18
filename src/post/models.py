@@ -59,3 +59,22 @@ class Like(TimestampedModel):
         User,
         on_delete=models.CASCADE
     )
+   class Meta:
+        unique_together = ("post", "user")
+
+
+class Bookmark(TimestampedModel):
+    post = models.ForeignKey(
+        Post,
+        related_name="bookmarks",
+        on_delete=models.CASCADE,
+    )
+
+    user = models.ForeignKey(
+        User,
+        related_name="bookmarks",
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        unique_together = ("post", "user")
