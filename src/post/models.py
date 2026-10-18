@@ -1,3 +1,4 @@
+
 from django.db import models
 from common.abstracts import TimestampedModel
 from users.models import User
@@ -47,6 +48,7 @@ class Comment(TimestampedModel):
     )
 
     content = models.TextField()
+
 
 class Like(TimestampedModel):
     post = models.ForeignKey(
