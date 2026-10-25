@@ -1,5 +1,6 @@
 import json
 from functools import wraps
+from urllib import request
 
 from django.contrib import messages
 from django.http import JsonResponse
@@ -101,22 +102,26 @@ def _validate_video(video):
     return None
 
 
+
 def _can_access_post(request, post):
     community = post.community
-    if community is None or not community.is_private:
+
+    # Posts outside a community remain accessible
+    if community is None:
         return True
+
+    # The community owner can access the post
     if community.owner_id == request.user.pk:
         return True
-    from community.models import CommunityMember
 
+    # Only community members can access the post
+    from community.models import CommunityMember
     return CommunityMember.objects.filter(
         community=community,
         user=request.user,
     ).exists()
 
 
-def _private_post_error(request):
-    return _error_response(request, "คุณไม่มีสิทธิ์เข้าถึงโพสต์นี้", 404)
 
 
 @_require_authentication
@@ -162,7 +167,9 @@ def create_post(request):
 @_require_authentication
 @require_POST
 def edit_post(request, post_id):
-    post = get_object_or_404(Post, pk=post_id)
+   post = get_object_or_404(Post, pk=post_id)
+    if not _can_access_post(request, post):
+    return _private_post_error(request)
     if post.user_id != request.user.pk:
         return _error_response(request, "คุณไม่มีสิทธิ์แก้ไขโพสต์นี้", 403)
     data = _request_data(request)
@@ -183,6 +190,8 @@ def edit_post(request, post_id):
 @require_POST
 def delete_post(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
+    if not _can_access_post(request, post):
+    return _private_post_error(request)
     if post.user_id != request.user.pk:
         return _error_response(request, "คุณไม่มีสิทธิ์ลบโพสต์นี้", 403)
     image = post.image
