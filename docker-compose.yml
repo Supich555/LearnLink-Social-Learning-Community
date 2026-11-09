@@ -4,13 +4,12 @@ services:
   db:
     image: mysql:8.4
     container_name: learnlink-db
-    restart: always
-
+    
     environment:
       MYSQL_DATABASE: learnlink
       MYSQL_USER: learnlink
       MYSQL_PASSWORD: learnlink123
-      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_ROOT_PASSWORD: Mook_18042903
 
     ports:
       - "3306:3306"

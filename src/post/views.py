@@ -166,10 +166,13 @@ def create_post(request):
 
 @_require_authentication
 @require_POST
+
+@_require_authentication
+@require_POST
 def edit_post(request, post_id):
-   post = get_object_or_404(Post, pk=post_id)
+    post = get_object_or_404(Post, pk=post_id)
     if not _can_access_post(request, post):
-    return _private_post_error(request)
+        return _private_post_error(request)
     if post.user_id != request.user.pk:
         return _error_response(request, "คุณไม่มีสิทธิ์แก้ไขโพสต์นี้", 403)
     data = _request_data(request)
@@ -191,7 +194,7 @@ def edit_post(request, post_id):
 def delete_post(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     if not _can_access_post(request, post):
-    return _private_post_error(request)
+        return _private_post_error(request)
     if post.user_id != request.user.pk:
         return _error_response(request, "คุณไม่มีสิทธิ์ลบโพสต์นี้", 403)
     image = post.image
